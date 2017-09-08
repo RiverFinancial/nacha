@@ -3,7 +3,11 @@ defmodule Nacha.Records.BatchControl do
   A struct containing data for a batch control record.
   """
 
-  use Nacha.Record, keys: [
+  @required [
+    :record_type_code, :service_class_code, :entry_count, :entry_hash,
+    :total_debits, :total_credits, :company_id, :odfi_id, :batch_number]
+
+  use Nacha.Record, fields: [
     {:record_type_code,   :number, 1,   8},
     {:service_class_code, :string, 3},
     {:entry_count,        :number, 6,   0},

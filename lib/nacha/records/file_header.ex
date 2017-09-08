@@ -3,7 +3,7 @@ defmodule Nacha.Records.FileHeader do
   A struct containing data for a file control record.
   """
 
-  use Nacha.Record, keys: [
+  use Nacha.Record, fields: [
     {:record_type_code,           :number, 1,   1},
     {:priority_code,              :string, 2,   "01"},
     {:separator,                  :string, 1},
