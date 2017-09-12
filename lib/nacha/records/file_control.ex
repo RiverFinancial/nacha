@@ -3,7 +3,7 @@ defmodule Nacha.Records.FileControl do
   A struct containing data for a file control record.
   """
 
-  use Nacha.Record, keys: [
+  use Nacha.Record, fields: [
     {:record_type_code, :number, 1,   9},
     {:batch_count,      :number, 6},
     {:block_count,      :number, 6},

@@ -4,7 +4,7 @@ defmodule Nacha.Records.EntryDetail do
   which represents a single transfer.
   """
 
-  use Nacha.Record, keys: [
+  use Nacha.Record, fields: [
     {:record_type_code,   :number, 1,   6},
     {:transaction_code,   :string, 2},
     {:rdfi_id,            :number, 8},

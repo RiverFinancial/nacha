@@ -3,7 +3,12 @@ defmodule Nacha.Records.BatchHeader do
   A struct containing data for a batch header record.
   """
 
-  use Nacha.Record, keys: [
+  @required [
+    :record_type_code, :service_class_code, :company_name, :company_id,
+    :standard_entry_class, :effective_date, :originator_status, :odfi_id,
+    :batch_number]
+
+  use Nacha.Record, fields: [
     {:record_type_code,     :number, 1,   5},
     {:service_class_code,   :string, 3},
     {:company_name,         :string, 16},
