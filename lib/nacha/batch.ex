@@ -40,6 +40,9 @@ defmodule Nacha.Batch do
   def to_string(%__MODULE__{} = batch),
     do: batch |> to_iolist |> Kernel.to_string
 
+  @spec to_iolist(list(__MODULE__.t)) :: iolist
+  def to_iolist([%__MODULE__{} | _] = batches),
+    do: batches |> Stream.map(&to_iolist/1) |> Enum.intersperse("\n")
   @spec to_iolist(__MODULE__.t) :: iolist
   def to_iolist(%__MODULE__{} = batch) do
     [Header.to_iolist(batch.header_record), "\n",

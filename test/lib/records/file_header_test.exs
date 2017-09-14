@@ -9,8 +9,8 @@ defmodule Nacha.Records.FileHeaderTest do
     immediate_destination_name: "Receiving Bank",
     immediate_origin_name: "First Origination Bank of Internet",
     reference_code: "12345678"}
-  @sample_string "101 12345678901234567891701011200A094101" <>
-    "Receiving Bank         First Origination Bank 12345678"
+  @sample_string \
+    "101 12345678901234567891701011200A094101Receiving Bank         First Origination Bank 12345678"
 
   test "formatting the record as a string" do
     string = Header.to_string(@sample_record)

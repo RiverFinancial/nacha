@@ -64,18 +64,16 @@ defmodule Nacha.Record do
   defp format_field(record, {key, type, length}),
     do: record |> Map.get(key, "") |> format_value(length, type) |> pad(length, type)
 
-  defp format_value(nil, length, :date),
+  defp format_value(nil, length, type)
+  when type in [:date, :time],
     do: format_value(nil, length, :string)
   defp format_value(date, _, :date),
     do: date |> Date.to_iso8601(:basic) |> String.slice(2, 6)
-  defp format_value(nil, length, :time),
-    do: format_value(nil, length, :string)
   defp format_value(time, _, :time),
     do: time |> Time.to_iso8601(:basic) |> String.slice(0, 4)
   defp format_value(value, length, _type),
     do: value |> to_string() |> String.slice(0, length)
 
   defp pad(val, length, :number), do: String.pad_leading(val, length, "0")
-  defp pad(val, length, :string), do: String.pad_trailing(val, length, " ")
-  defp pad(val, _, _), do: val
+  defp pad(val, length, _), do: String.pad_trailing(val, length, " ")
 end
