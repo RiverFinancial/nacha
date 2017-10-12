@@ -6,9 +6,9 @@ defmodule Nacha.Records.EntryDetailTest do
   @sample_record %EntryDetail{
     transaction_code: "27", rdfi_id: 12345678, check_digit: 9,
     account_number: "012345678", amount: "9999", individual_id: "1234567890",
-    individual_name: "Bob Loblaw", trace_number: "1234567890"}
+    individual_name: "Bob Loblaw", trace_id: "12345678", trace_number: 1}
   @sample_string \
-    "627123456789012345678        00000099991234567890     Bob Loblaw              01234567890     "
+    "627123456789012345678        00000099991234567890     Bob Loblaw              0123456780000001"
 
   test "formatting the record as a string" do
     string = EntryDetail.to_string(@sample_record)

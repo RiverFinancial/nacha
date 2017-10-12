@@ -16,5 +16,6 @@ defmodule Nacha.Records.EntryDetail do
     {:individual_name,      :string, 22},
     {:discretionary_data,   :string, 2},
     {:addenda_indicator,    :number, 1,   0},
-    {:trace_number,         :string, 15}]
+    {:trace_id,             :number, 8},
+    {:trace_number,         :number, 7}]
 end
