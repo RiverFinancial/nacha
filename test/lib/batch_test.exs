@@ -1,28 +1,33 @@
 defmodule Nacha.BatchTest do
   use ExUnit.Case, async: true
 
-  alias Nacha.{Batch, Records.EntryDetail}
+  alias Nacha.{Batch, Entry, Records.Addendum, Records.EntryDetail}
   alias Nacha.Records.BatchHeader, as: Header
   alias Nacha.Records.BatchControl, as: Control
 
   @credit_entries [
-    %EntryDetail{
-      transaction_code: "22", rdfi_id: 99999999, check_digit: 9,
-      account_number: "012345678", amount: 100, individual_id: "1234567890",
-      individual_name: "Bob Loblaw", trace_id: "12345678", trace_number: 1},
-    %EntryDetail{
+    %Entry{
+      record: %EntryDetail{
+        transaction_code: "22", rdfi_id: 99999999, check_digit: 9,
+        account_number: "012345678", amount: 100, individual_id: "1234567890",
+        individual_name: "Bob Loblaw", trace_id: "12345678", trace_number: 1},
+      addenda: [
+        %Addendum{
+          payment_related_data: "This one has some additional data",
+          entry_detail_sequence_number: 1}]},
+    %Entry{record: %EntryDetail{
       transaction_code: "32", rdfi_id: 99999999, check_digit: 9,
       account_number: "012345678", amount: 200, individual_id: "1234567890",
-      individual_name: "Bob Loblaw", trace_id: "12345678", trace_number: 2}]
+      individual_name: "Bob Loblaw", trace_id: "12345678", trace_number: 2}}]
   @debit_entries [
-    %EntryDetail{
+    %Entry{record: %EntryDetail{
       transaction_code: "27", rdfi_id: 99999999, check_digit: 9,
       account_number: "012345678", amount: 200, individual_id: "1234567890",
-      individual_name: "Bob Loblaw", trace_id: "12345678", trace_number: 3},
-    %EntryDetail{
+      individual_name: "Bob Loblaw", trace_id: "12345678", trace_number: 3}},
+    %Entry{record: %EntryDetail{
       transaction_code: "37", rdfi_id: 99999999, check_digit: 9,
       account_number: "012345678", amount: 300, individual_id: "1234567890",
-      individual_name: "Bob Loblaw", trace_id: "12345678", trace_number: 4}]
+      individual_name: "Bob Loblaw", trace_id: "12345678", trace_number: 4}}]
   @entries @credit_entries ++ @debit_entries
   @valid_params %{
     batch_number: 1,
@@ -34,6 +39,7 @@ defmodule Nacha.BatchTest do
   @sample_batch_string Enum.join([
     "5200Sell Co                             1234567890PPD                170101   1123456780000001",
     "622999999999012345678        00000001001234567890     Bob Loblaw              0123456780000001",
+    "705This one has some additional data                                               00010000001",
     "632999999999012345678        00000002001234567890     Bob Loblaw              0123456780000002",
     "627999999999012345678        00000002001234567890     Bob Loblaw              0123456780000003",
     "637999999999012345678        00000003001234567890     Bob Loblaw              0123456780000004",
@@ -84,11 +90,14 @@ defmodule Nacha.BatchTest do
     test "limits the entry hash to the 10 least significant digits" do
       {:ok, batch} =
         @entries
-        |> Enum.map(&%{&1 | rdfi_id: 9999999999})
+        |> Enum.map(&update_rdfi(&1, 9999999999))
         |> Batch.build(@valid_params)
 
       assert batch.control_record.entry_hash == 9999999996
     end
+
+    defp update_rdfi(entry, rdfi_id),
+      do: %{entry | record: %{entry.record | rdfi_id: rdfi_id}}
 
     test "generates the full header record" do
       {:ok, %{header_record: header}} = Batch.build(@entries, @valid_params)

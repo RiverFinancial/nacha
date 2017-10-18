@@ -8,7 +8,7 @@ defmodule Nacha.Batch do
 
   import Kernel, except: [to_string: 1]
 
-  alias Nacha.Records.EntryDetail
+  alias Nacha.Entry
   alias Nacha.Records.BatchHeader, as: Header
   alias Nacha.Records.BatchControl, as: Control
 
@@ -19,7 +19,7 @@ defmodule Nacha.Batch do
 
   defstruct [:header_record, :control_record, errors: [], entries: []]
 
-  @typep entry_list :: list(EntryDetail.t)
+  @typep entry_list :: list(Entry.t)
 
   @type t :: %__MODULE__{
     header_record: Header.t, entries: entry_list, control_record: Control.t,
@@ -46,7 +46,7 @@ defmodule Nacha.Batch do
   @spec to_iolist(__MODULE__.t) :: iolist
   def to_iolist(%__MODULE__{} = batch) do
     [Header.to_iolist(batch.header_record), "\n",
-     EntryDetail.to_iolist(batch.entries), "\n",
+     Entry.to_iolist(batch.entries), "\n",
      Control.to_iolist(batch.control_record)]
   end
 
@@ -95,13 +95,14 @@ defmodule Nacha.Batch do
 
   defp totals(entries) do
     entries
-    |> Enum.group_by(&credit_or_debit/1, &Map.get(&1, :amount, 0))
+    |> Enum.group_by(&credit_or_debit/1, &get_amount/1)
     |> sums()
   end
 
   defp calculate_hash(entries) do
     entries
-    |> Enum.reduce(0, &(&2 + &1.rdfi_id))
+    |> Stream.map(&(&1.record.rdfi_id))
+    |> Enum.sum()
     |> Integer.digits
     |> Enum.take(-10)
     |> Integer.undigits
@@ -113,13 +114,14 @@ defmodule Nacha.Batch do
     do: @service_class_codes.credit_only
   defp calculate_scc(_, _), do: @service_class_codes.mixed
 
-  defp credit_or_debit(%{transaction_code: tx})
+  defp credit_or_debit(%{record: %{transaction_code: tx}})
   when tx in @credit_codes, do: :credit
-  defp credit_or_debit(%{transaction_code: tx})
+  defp credit_or_debit(%{record: %{transaction_code: tx}})
   when tx in @debit_codes, do: :debit
   defp credit_or_debit(_), do: :error
 
-  defp sums(amounts), do: {sum(amounts, :credit), sum(amounts, :debit)}
+  defp get_amount(%{record: %{amount: amount}}), do: amount
 
+  defp sums(amounts), do: {sum(amounts, :credit), sum(amounts, :debit)}
   defp sum(amounts, type), do: amounts |> Map.get(type, []) |> Enum.sum
 end

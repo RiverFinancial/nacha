@@ -1,49 +1,49 @@
 defmodule Nacha.FileTest do
   use ExUnit.Case, async: true
 
-  alias Nacha.{Batch, File, Records.EntryDetail}
+  alias Nacha.{Batch, Entry, File, Records.EntryDetail}
 
   @entries [
-    %EntryDetail{
+    %Entry{record: %EntryDetail{
       transaction_code: "22", rdfi_id: 11111111, check_digit: 9,
       account_number: "012345678", amount: 100, individual_id: "0987654321",
       individual_name: "Bob Loblaw", standard_entry_class: "PPD",
-      trace_id: "12345678", trace_number: 1},
-    %EntryDetail{
+      trace_id: "12345678", trace_number: 1}},
+    %Entry{record: %EntryDetail{
       transaction_code: "27", rdfi_id: 22222222, check_digit: 9,
       account_number: "123456789", amount: 200, individual_id: "9876543210",
       individual_name: "Bob Loblaw", standard_entry_class: "CCD",
-      trace_id: "12345678", trace_number: 2},
-    %EntryDetail{
+      trace_id: "12345678", trace_number: 2}},
+    %Entry{record: %EntryDetail{
       transaction_code: "22", rdfi_id: 33333333, check_digit: 9,
       account_number: "234567890", amount: 100, individual_id: "8765432109",
       individual_name: "Bob Loblaw", standard_entry_class: "CCD",
-      trace_id: "12345678", trace_number: 3},
-    %EntryDetail{
+      trace_id: "12345678", trace_number: 3}},
+    %Entry{record: %EntryDetail{
       transaction_code: "27", rdfi_id: 44444444, check_digit: 9,
       account_number: "345678901", amount: 200, individual_id: "7654321098",
       individual_name: "Bob Loblaw", standard_entry_class: "PPD",
-      trace_id: "12345678", trace_number: 4},
-    %EntryDetail{
+      trace_id: "12345678", trace_number: 4}},
+    %Entry{record: %EntryDetail{
       transaction_code: "37", rdfi_id: 55555555, check_digit: 9,
       account_number: "456789012", amount: 444, individual_id: "6543210987",
       individual_name: "Bob Loblaw", standard_entry_class: "CCD",
-      trace_id: "12345678", trace_number: 5},
-    %EntryDetail{
+      trace_id: "12345678", trace_number: 5}},
+    %Entry{record: %EntryDetail{
       transaction_code: "32", rdfi_id: 66666666, check_digit: 9,
       account_number: "567890123", amount: 200, individual_id: "5432109876",
       individual_name: "Bob Loblaw", standard_entry_class: "PPD",
-      trace_id: "12345678", trace_number: 6},
-    %EntryDetail{
+      trace_id: "12345678", trace_number: 6}},
+    %Entry{record: %EntryDetail{
       transaction_code: "22", rdfi_id: 77777777, check_digit: 9,
       account_number: "678901234", amount: 666, individual_id: "4321098765",
       individual_name: "Bob Loblaw", standard_entry_class: "PPD",
-      trace_id: "12345678", trace_number: 7},
-    %EntryDetail{
+      trace_id: "12345678", trace_number: 7}},
+    %Entry{record: %EntryDetail{
       transaction_code: "37", rdfi_id: 88888888, check_digit: 9,
       account_number: "789012345", amount: 300, individual_id: "3210987654",
       individual_name: "Bob Loblaw", standard_entry_class: "PPD",
-      trace_id: "12345678", trace_number: 8}]
+      trace_id: "12345678", trace_number: 8}}]
   @valid_params %{
     effective_date: ~D[2017-01-01],
     immediate_destination: 123456789,

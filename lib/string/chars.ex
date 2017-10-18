@@ -3,6 +3,11 @@ defimpl String.Chars, for: Nacha.Records.EntryDetail do
   def to_string(record), do: Nacha.Records.EntryDetail.to_string(record)
 end
 
+defimpl String.Chars, for: Nacha.Records.Addendum do
+  def to_string(nil), do: ""
+  def to_string(record), do: Nacha.Records.Addendum.to_string(record)
+end
+
 defimpl String.Chars, for: Nacha.Records.BatchHeader do
   def to_string(nil), do: ""
   def to_string(record), do: Nacha.Records.BatchHeader.to_string(record)

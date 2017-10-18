@@ -66,7 +66,7 @@ defmodule Nacha.File do
 
   defp build_batches(file, params, entries) do
     entries
-    |> Enum.group_by(&(&1.standard_entry_class))
+    |> Enum.group_by(&(&1.record.standard_entry_class))
     |> Enum.with_index(1)
     |> List.foldr(file, &build_batch(&1, &2, params))
   end
@@ -135,7 +135,9 @@ defmodule Nacha.File do
   defp add_entry_hash(params, %{batches: batches}) do
     hash =
       batches
-      |> Enum.flat_map(fn(batch) -> Enum.map(batch.entries, &(&1.rdfi_id)) end)
+      |> Stream.flat_map(fn(batch) ->
+           Enum.map(batch.entries, &(&1.record.rdfi_id))
+         end)
       |> Enum.sum
       |> Integer.digits
       |> Enum.take(-10)
