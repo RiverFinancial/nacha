@@ -11,7 +11,7 @@ defmodule Nacha.Mixfile do
       package: package(),
       deps: deps(),
       name: "Nacha",
-      source_url: "https://github.com/tokkenops/nacha.ex"
+      source_url: "https://github.com/inabsentia/nacha.ex"
     ]
   end
 
@@ -39,7 +39,7 @@ defmodule Nacha.Mixfile do
     [
       maintainers: ["Brent Yoder"],
       licenses: ["Apache 2.0"],
-      links: %{"GitHub" => "https://github.com/tokkenops/nacha.ex"}
+      links: %{"GitHub" => "https://github.com/inabsentia/nacha.ex"}
     ]
   end
 end
