@@ -19,16 +19,19 @@ defmodule Nacha.Batch do
 
   defstruct [:header_record, :control_record, errors: [], entries: []]
 
-  @typep entry_list :: list(Entry.t)
+  @typep entry_list :: list(Entry.t())
 
   @type t :: %__MODULE__{
-    header_record: Header.t, entries: entry_list, control_record: Control.t,
-    errors: list({atom, String.t})}
+          header_record: Header.t(),
+          entries: entry_list,
+          control_record: Control.t(),
+          errors: list({atom, String.t()})
+        }
 
   @doc """
   Build a valid batch with necessary generated values.
   """
-  @spec build(entry_list, %{atom => any}) :: __MODULE__.t
+  @spec build(entry_list, %{atom => any}) :: __MODULE__.t()
   def build(entries, params) do
     params
     |> build_params(entries)
@@ -36,40 +39,50 @@ defmodule Nacha.Batch do
     |> validate
   end
 
-  @spec to_string(__MODULE__.t) :: String.t
+  @spec to_string(__MODULE__.t()) :: String.t()
   def to_string(%__MODULE__{} = batch),
-    do: batch |> to_iolist |> Kernel.to_string
+    do: batch |> to_iolist |> Kernel.to_string()
 
-  @spec to_iolist(list(__MODULE__.t)) :: iolist
+  @spec to_iolist(list(__MODULE__.t())) :: iolist
   def to_iolist([%__MODULE__{} | _] = batches),
     do: batches |> Stream.map(&to_iolist/1) |> Enum.intersperse("\n")
-  @spec to_iolist(__MODULE__.t) :: iolist
+
+  @spec to_iolist(__MODULE__.t()) :: iolist
   def to_iolist(%__MODULE__{} = batch) do
-    [Header.to_iolist(batch.header_record), "\n",
-     Entry.to_iolist(batch.entries), "\n",
-     Control.to_iolist(batch.control_record)]
+    [
+      Header.to_iolist(batch.header_record),
+      "\n",
+      Entry.to_iolist(batch.entries),
+      "\n",
+      Control.to_iolist(batch.control_record)
+    ]
   end
 
   defp build_params(params, entries) do
     {credit_total, debit_total} = totals(entries)
+
     Map.merge(
       params,
-      %{entries: entries,
+      %{
+        entries: entries,
         entry_count: length(entries),
         entry_hash: calculate_hash(entries),
         total_credits: credit_total,
         total_debits: debit_total,
-        service_class_code: calculate_scc(credit_total, debit_total)})
+        service_class_code: calculate_scc(credit_total, debit_total)
+      }
+    )
   end
 
   defp do_build(params) do
     %__MODULE__{
       header_record: build_header(params),
       entries: params.entries,
-      control_record: build_control(params)}
+      control_record: build_control(params)
+    }
   end
 
-  @spec valid?(__MODULE__.t) :: boolean
+  @spec valid?(__MODULE__.t()) :: boolean
   def valid?(batch), do: match?({:ok, _}, validate(batch))
 
   defp build_header(params), do: Header |> struct(params)
@@ -79,7 +92,7 @@ defmodule Nacha.Batch do
   defp validate(%{header_record: header, control_record: control} = batch) do
     case {Header.validate(header), Control.validate(control)} do
       {%{valid?: true} = header, %{valid?: true} = control} ->
-         {:ok, %{batch | header_record: header, control_record: control}}
+        {:ok, %{batch | header_record: header, control_record: control}}
 
       {header, control} ->
         {:error, consolidate_errors(batch, header, control)}
@@ -87,10 +100,12 @@ defmodule Nacha.Batch do
   end
 
   defp consolidate_errors(batch, header, control) do
-    %{batch |
-      header_record: header,
-      control_record: control,
-      errors: Enum.uniq(header.errors ++ control.errors)}
+    %{
+      batch
+      | header_record: header,
+        control_record: control,
+        errors: Enum.uniq(header.errors ++ control.errors)
+    }
   end
 
   defp totals(entries) do
@@ -101,27 +116,33 @@ defmodule Nacha.Batch do
 
   defp calculate_hash(entries) do
     entries
-    |> Stream.map(&(&1.record.rdfi_id))
+    |> Stream.map(& &1.record.rdfi_id)
     |> Enum.sum()
-    |> Integer.digits
+    |> Integer.digits()
     |> Enum.take(-10)
-    |> Integer.undigits
+    |> Integer.undigits()
   end
 
   defp calculate_scc(0, debits) when debits > 0,
     do: @service_class_codes.debit_only
+
   defp calculate_scc(credits, 0) when credits > 0,
     do: @service_class_codes.credit_only
+
   defp calculate_scc(_, _), do: @service_class_codes.mixed
 
   defp credit_or_debit(%{record: %{transaction_code: tx}})
-  when tx in @credit_codes, do: :credit
+       when tx in @credit_codes,
+       do: :credit
+
   defp credit_or_debit(%{record: %{transaction_code: tx}})
-  when tx in @debit_codes, do: :debit
+       when tx in @debit_codes,
+       do: :debit
+
   defp credit_or_debit(_), do: :error
 
   defp get_amount(%{record: %{amount: amount}}), do: amount
 
   defp sums(amounts), do: {sum(amounts, :credit), sum(amounts, :debit)}
-  defp sum(amounts, type), do: amounts |> Map.get(type, []) |> Enum.sum
+  defp sum(amounts, type), do: amounts |> Map.get(type, []) |> Enum.sum()
 end

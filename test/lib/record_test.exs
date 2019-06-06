@@ -19,13 +19,13 @@ defmodule Nacha.RecordTest do
   end
 
   test "converts to iolist of formatted fields" do
-    list = %TestRecord{num: 1, str: "two"} |> TestRecord.to_iolist
+    list = %TestRecord{num: 1, str: "two"} |> TestRecord.to_iolist()
 
     assert list == [[[], "01"], "two  "]
   end
 
   test "converts to string based on field formats" do
-    string = %TestRecord{num: 1, str: "two"} |> TestRecord.to_string
+    string = %TestRecord{num: 1, str: "two"} |> TestRecord.to_string()
 
     assert string == "01two  "
   end

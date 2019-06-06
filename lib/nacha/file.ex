@@ -12,20 +12,27 @@ defmodule Nacha.File do
   alias Nacha.Records.FileHeader, as: Header
   alias Nacha.Records.FileControl, as: Control
 
-  @filler_record \
-    "\n9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999"
+  @filler_record "\n9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999"
 
   defstruct [
-    :header_record, :control_record, batches: [], failed: [], errors: []]
+    :header_record,
+    :control_record,
+    batches: [],
+    failed: [],
+    errors: []
+  ]
 
   @type t :: %__MODULE__{
-    header_record: Header.t, batches: list(Batch.t), control_record: Control.t,
-    errors: list({atom, String.t})}
+          header_record: Header.t(),
+          batches: list(Batch.t()),
+          control_record: Control.t(),
+          errors: list({atom, String.t()})
+        }
 
   @doc """
   Build a valid file with necessary generated values.
   """
-  @spec build(list(EntryDetail.t), %{atom => any}) :: __MODULE__.t
+  @spec build(list(EntryDetail.t()), %{atom => any}) :: __MODULE__.t()
   def build(entries, params) do
     params
     |> build_params
@@ -33,18 +40,23 @@ defmodule Nacha.File do
     |> validate
   end
 
-  @spec to_string(__MODULE__.t) :: String.t
-  def to_string(%__MODULE__{} = file), do: file |> to_iolist |> Kernel.to_string
+  @spec to_string(__MODULE__.t()) :: String.t()
+  def to_string(%__MODULE__{} = file),
+    do: file |> to_iolist |> Kernel.to_string()
 
-  @spec to_iolist(__MODULE__.t) :: iolist
+  @spec to_iolist(__MODULE__.t()) :: iolist
   def to_iolist(%__MODULE__{} = file) do
-    [Header.to_iolist(file.header_record), "\n",
-     Batch.to_iolist(file.batches), "\n",
-     Control.to_iolist(file.control_record),
-     generate_filler_records(file)]
+    [
+      Header.to_iolist(file.header_record),
+      "\n",
+      Batch.to_iolist(file.batches),
+      "\n",
+      Control.to_iolist(file.control_record),
+      generate_filler_records(file)
+    ]
   end
 
-  @spec valid?(__MODULE__.t) :: boolean
+  @spec valid?(__MODULE__.t()) :: boolean
   def valid?(file), do: match?({:ok, _}, validate(file))
 
   defp build_params(params) do
@@ -66,25 +78,26 @@ defmodule Nacha.File do
 
   defp build_batches(file, params, entries) do
     entries
-    |> Enum.group_by(&(&1.record.standard_entry_class))
+    |> Enum.group_by(& &1.record.standard_entry_class)
     |> Enum.with_index(1)
     |> List.foldr(file, &build_batch(&1, &2, params))
   end
 
   defp build_batch({{sec, entries}, batch_num}, file, params) do
     entries
-    |> Batch.build(
-      %{batch_number: batch_num,
-        company_id: params.immediate_origin,
-        company_name: params.immediate_origin_name,
-        effective_date: params.effective_date,
-        descriptive_date: Map.get(params, :descriptive_date),
-        odfi_id: params.immediate_destination,
-        standard_entry_class: sec})
+    |> Batch.build(%{
+      batch_number: batch_num,
+      company_id: params.immediate_origin,
+      company_name: params.immediate_origin_name,
+      effective_date: params.effective_date,
+      descriptive_date: Map.get(params, :descriptive_date),
+      odfi_id: params.immediate_destination,
+      standard_entry_class: sec
+    })
     |> case do
-         {:ok, batch}     -> Map.update!(file, :batches, &[batch | &1])
-         {:error, failed} -> Map.update!(file, :failed, &[failed | &1])
-       end
+      {:ok, batch} -> Map.update!(file, :batches, &[batch | &1])
+      {:error, failed} -> Map.update!(file, :failed, &[failed | &1])
+    end
   end
 
   defp build_control(file) do
@@ -101,14 +114,17 @@ defmodule Nacha.File do
 
   defp generate_filler_records(%__MODULE__{} = file),
     do: file |> line_count |> fill_count |> generate_filler_records
+
   defp generate_filler_records(count)
-  when is_integer(count) and count > 0,
-    do: for _ <- 1..count, do: @filler_record
+       when is_integer(count) and count > 0,
+       do: for(_ <- 1..count, do: @filler_record)
+
   defp generate_filler_records(0), do: []
 
   defp line_count(%__MODULE__{control_record: control}), do: line_count(control)
+
   defp line_count(%{entry_count: entry_count, batch_count: batch_count}),
-    do: entry_count + (2 * batch_count) + 2
+    do: entry_count + 2 * batch_count + 2
 
   defp fill_count(lines) do
     case rem(lines, 10) do
@@ -119,14 +135,16 @@ defmodule Nacha.File do
 
   defp add_entry_count(params, %{batches: batches}) do
     Map.put(
-      params, :entry_count,
-      Enum.reduce(batches, 0, &(&2 + &1.control_record.entry_count)))
+      params,
+      :entry_count,
+      Enum.reduce(batches, 0, &(&2 + &1.control_record.entry_count))
+    )
   end
 
   defp add_block_count(params) do
     count =
       (line_count(params) / 10)
-      |> Float.ceil
+      |> Float.ceil()
       |> trunc
 
     Map.put(params, :block_count, count)
@@ -135,25 +153,27 @@ defmodule Nacha.File do
   defp add_entry_hash(params, %{batches: batches}) do
     hash =
       batches
-      |> Stream.flat_map(fn(batch) ->
-           Enum.map(batch.entries, &(&1.record.rdfi_id))
-         end)
-      |> Enum.sum
-      |> Integer.digits
+      |> Stream.flat_map(fn batch ->
+        Enum.map(batch.entries, & &1.record.rdfi_id)
+      end)
+      |> Enum.sum()
+      |> Integer.digits()
       |> Enum.take(-10)
-      |> Integer.undigits
+      |> Integer.undigits()
 
     Map.put(params, :entry_hash, hash)
   end
 
   defp add_total_debits(params, %{batches: batches}) do
-    total = batches |> Stream.map(&(&1.control_record.total_debits)) |> Enum.sum
+    total =
+      batches |> Stream.map(& &1.control_record.total_debits) |> Enum.sum()
 
     Map.put(params, :total_debits, total)
   end
 
   defp add_total_credits(params, %{batches: batches}) do
-    total = batches |> Stream.map(&(&1.control_record.total_credits)) |> Enum.sum
+    total =
+      batches |> Stream.map(& &1.control_record.total_credits) |> Enum.sum()
 
     Map.put(params, :total_credits, total)
   end
@@ -169,9 +189,11 @@ defmodule Nacha.File do
   end
 
   defp consolidate_errors(file, header, control) do
-    %{file |
-      header_record: header,
-      control_record: control,
-      errors: Enum.uniq(header.errors ++ control.errors)}
+    %{
+      file
+      | header_record: header,
+        control_record: control,
+        errors: Enum.uniq(header.errors ++ control.errors)
+    }
   end
 end

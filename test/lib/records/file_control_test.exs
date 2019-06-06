@@ -4,10 +4,14 @@ defmodule Nacha.Records.FileControlTest do
   alias Nacha.Records.FileControl, as: Control
 
   @sample_record %Control{
-    batch_count: 4, block_count: 5, entry_count: 42, entry_hash: 12345678,
-    total_debits: 123456, total_credits: 123456}
-  @sample_string \
-    "9000004000005000000420012345678000000123456000000123456                                       "
+    batch_count: 4,
+    block_count: 5,
+    entry_count: 42,
+    entry_hash: 12_345_678,
+    total_debits: 123_456,
+    total_credits: 123_456
+  }
+  @sample_string "9000004000005000000420012345678000000123456000000123456                                       "
 
   test "formatting the record as a string" do
     string = Control.to_string(@sample_record)

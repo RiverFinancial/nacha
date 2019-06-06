@@ -10,19 +10,24 @@ defmodule Nacha.Entry do
 
   defstruct [:record, addenda: []]
 
-  @type t :: %__MODULE__{record: EntryDetail.t, addenda: list(Addendum.t)}
+  @type t :: %__MODULE__{record: EntryDetail.t(), addenda: list(Addendum.t())}
 
-  @spec to_string(__MODULE__.t) :: String.t
+  @spec to_string(__MODULE__.t()) :: String.t()
   def to_string(%__MODULE__{} = entry),
-    do: entry |> to_iolist |> Kernel.to_string
+    do: entry |> to_iolist |> Kernel.to_string()
 
-  @spec to_iolist(__MODULE__.t | list(__MODULE__.t)) :: iolist()
+  @spec to_iolist(__MODULE__.t() | list(__MODULE__.t())) :: iolist()
   def to_iolist(entries) when is_list(entries),
     do: entries |> Stream.map(&to_iolist/1) |> Enum.intersperse("\n")
+
   def to_iolist(%__MODULE__{addenda: []} = entry),
     do: EntryDetail.to_iolist(entry.record)
+
   def to_iolist(%__MODULE__{} = entry) do
-    [EntryDetail.to_iolist(entry.record), "\n",
-     Addendum.to_iolist(entry.addenda)]
+    [
+      EntryDetail.to_iolist(entry.record),
+      "\n",
+      Addendum.to_iolist(entry.addenda)
+    ]
   end
 end
