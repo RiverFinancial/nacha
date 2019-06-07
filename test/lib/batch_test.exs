@@ -15,6 +15,7 @@ defmodule Nacha.BatchTest do
         amount: 100,
         individual_id: "1234567890",
         individual_name: "Bob Loblaw",
+        addenda_indicator: 1,
         trace_id: "12345678",
         trace_number: 1
       },
@@ -79,7 +80,7 @@ defmodule Nacha.BatchTest do
   @sample_batch_string Enum.join(
                          [
                            "5200Sell Co                             1234567890PPD                170101   1123456780000001",
-                           "622999999999012345678        00000001001234567890     Bob Loblaw              0123456780000001",
+                           "622999999999012345678        00000001001234567890     Bob Loblaw              1123456780000001",
                            "705This one has some additional data                                               00010000001",
                            "632999999999012345678        00000002001234567890     Bob Loblaw              0123456780000002",
                            "627999999999012345678        00000002001234567890     Bob Loblaw              0123456780000003",

@@ -1,7 +1,7 @@
 defmodule Nacha.FileTest do
   use ExUnit.Case, async: true
 
-  alias Nacha.{Batch, Entry, File, Records.EntryDetail}
+  alias Nacha.{Batch, Entry, File, Records.Addendum, Records.EntryDetail}
 
   @entries [
     %Entry{
@@ -16,7 +16,8 @@ defmodule Nacha.FileTest do
         standard_entry_class: "PPD",
         trace_id: "12345678",
         trace_number: 1
-      }
+      },
+      addenda: %Addendum{payment_related_data: "More Info"}
     },
     %Entry{
       record: %EntryDetail{
@@ -117,6 +118,7 @@ defmodule Nacha.FileTest do
       }
     }
   ]
+
   @valid_params %{
     effective_date: ~D[2017-01-01],
     immediate_destination: 123_456_789,
@@ -126,11 +128,13 @@ defmodule Nacha.FileTest do
     creation_date: ~D[2017-01-01],
     creation_time: ~T[12:00:00]
   }
+
   @sample_file_string Enum.join(
                         [
                           "101 12345678912345678901701011200A094101My Bank, Inc.          Sell Co                        ",
                           "5200Sell Co                             1234567890CCD                170101   1123456780000001",
-                          "627222222229123456789        00000002009876543210     Bob Loblaw              0123456780000002",
+                          "627222222229123456789        00000002009876543210     Bob Loblaw              1123456780000002",
+                          "705More Info                                                                       00010000001",
                           "622333333339234567890        00000001008765432109     Bob Loblaw              0123456780000003",
                           "637555555559456789012        00000004446543210987     Bob Loblaw              0123456780000005",
                           "820000000301111111100000000006440000000001001234567890                         123456780000001",
@@ -142,7 +146,6 @@ defmodule Nacha.FileTest do
                           "637888888889789012345        00000003003210987654     Bob Loblaw              0123456780000008",
                           "820000000502888888860000000005000000000009661234567890                         123456780000002",
                           "9000002000002000000080399999996000000001144000000001066                                       ",
-                          "9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999",
                           "9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999",
                           "9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999",
                           "9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999",
@@ -202,7 +205,7 @@ defmodule Nacha.FileTest do
   end
 
   test "doesn't add filler records for a full block" do
-    {:ok, file} = @entries |> Enum.take(4) |> File.build(@valid_params)
+    {:ok, file} = @entries |> Enum.slice(2, 4) |> File.build(@valid_params)
 
     lines = file |> File.to_string() |> String.split("\n")
 
