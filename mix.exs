@@ -23,7 +23,8 @@ defmodule Nacha.Mixfile do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:ex_doc, ">= 0.0.0", only: :dev}
+      {:ex_doc, ">= 0.0.0", only: :dev},
+      {:mix_test_watch, "~> 0.8", only: :dev, runtime: false}
     ]
   end
 

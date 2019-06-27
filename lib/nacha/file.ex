@@ -11,6 +11,7 @@ defmodule Nacha.File do
   alias Nacha.{Batch, Records.EntryDetail}
   alias Nacha.Records.FileHeader, as: Header
   alias Nacha.Records.FileControl, as: Control
+  alias Nacha.Parser
 
   @filler_record "\n9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999"
 
@@ -38,6 +39,14 @@ defmodule Nacha.File do
     |> build_params
     |> do_build(entries)
     |> validate
+  end
+
+  @spec read(String.t()) :: {:ok, t()} | {:error, File.posix()}
+  def read(filePath) do
+    with {:ok, content} <- File.read(filePath),
+         {:ok, file} <- Parser.decode(content) do
+      validate(file)
+    end
   end
 
   @spec to_string(__MODULE__.t()) :: String.t()

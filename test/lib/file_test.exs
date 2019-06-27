@@ -1,7 +1,8 @@
 defmodule Nacha.FileTest do
   use ExUnit.Case, async: true
 
-  alias Nacha.{Batch, Entry, File, Records.EntryDetail}
+  alias Nacha.{Batch, Entry, Records.EntryDetail}
+  alias Nacha.File, as: NachaFile
 
   @entries [
     %Entry{
@@ -119,8 +120,8 @@ defmodule Nacha.FileTest do
   ]
   @valid_params %{
     effective_date: ~D[2017-01-01],
-    immediate_destination: 123_456_789,
-    immediate_origin: 1_234_567_890,
+    immediate_destination: "123456789",
+    immediate_origin: "1234567890",
     immediate_destination_name: "My Bank, Inc.",
     immediate_origin_name: "Sell Co",
     creation_date: ~D[2017-01-01],
@@ -154,13 +155,13 @@ defmodule Nacha.FileTest do
 
   describe "building a file" do
     setup(context) do
-      {:ok, file} = File.build(@entries, @valid_params)
+      {:ok, file} = NachaFile.build(@entries, @valid_params)
 
       Map.put(context, :subject, file)
     end
 
     test "is valid with valid params", %{subject: file} do
-      assert File.valid?(file)
+      assert NachaFile.valid?(file)
     end
 
     test "builds a batch from the entries", %{subject: %{batches: batches}} do
@@ -194,19 +195,33 @@ defmodule Nacha.FileTest do
   end
 
   test "formatting a file as a string" do
-    {:ok, file} = File.build(@entries, @valid_params)
+    {:ok, file} = NachaFile.build(@entries, @valid_params)
 
-    string = File.to_string(file)
+    string = NachaFile.to_string(file)
 
     assert string == @sample_file_string
   end
 
   test "doesn't add filler records for a full block" do
-    {:ok, file} = @entries |> Enum.take(4) |> File.build(@valid_params)
+    {:ok, file} = @entries |> Enum.take(4) |> NachaFile.build(@valid_params)
 
-    lines = file |> File.to_string() |> String.split("\n")
+    lines = file |> NachaFile.to_string() |> String.split("\n")
 
     assert length(lines) == 10
     refute List.last(lines) =~ ~r/^9+$/
+  end
+
+  describe "read/1" do
+    test "return error if file doesn't exist" do
+      assert {:error, :enoent} == File.read("./non_existing")
+    end
+
+    test "return nacha file if file is in valid format" do
+      {:ok, file} = NachaFile.build(
+        @entries,
+        @valid_params
+      )
+      assert {:ok, file} == NachaFile.read("./test/fixtures/sample2.ach")
+    end
   end
 end
