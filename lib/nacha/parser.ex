@@ -6,7 +6,7 @@ defmodule Nacha.Parser do
   alias Nacha.{Batch, Records.EntryDetail, Records.BatchControl}
   alias Nacha.Records.FileHeader, as: Header
   alias Nacha.Entry
-  alias Nacha.Records.BatchHeader, as: BatchHeader
+  alias Nacha.Records.{Addendum, BatchHeader}
   alias Nacha.Records.FileControl, as: Control
 
   @spec decode(iodata) :: {:ok, NachaFile.t()} | {:error, term()}
@@ -16,7 +16,6 @@ defmodule Nacha.Parser do
     with {:ok, header, rest_bin} <- parse_file_header(bin),
          {:ok, batches, rest_bin} <- parse_batches(rest_bin),
          {:ok, file_control} <- parse_file_control(rest_bin) do
-      # {:ok, header, batches}
       {:ok,
        %NachaFile{
          header_record: header,
@@ -63,7 +62,6 @@ defmodule Nacha.Parser do
   end
 
   defp parse_file_control(r) do
-    r |> IO.inspect(label: "r")
     {:error, :invalid_file_control_format}
   end
 
@@ -265,15 +263,74 @@ defmodule Nacha.Parser do
       }
       |> EntryDetail.validate()
 
-    entry = %Entry{
-      record: entry_detail
-    }
+    if addenda_indicator == 0 do
+      entry = %Entry{
+        record: entry_detail
+      }
 
-    do_parse_entries(rest_bin, standard_entry_class, [entry | acc])
+      do_parse_entries(rest_bin, standard_entry_class, [entry | acc])
+    else
+      case parse_addenda(rest_bin) do
+        {:ok, addenda, rest_bin} ->
+          entry = %Entry{
+            record: entry_detail,
+            addenda: addenda
+          }
+
+          do_parse_entries(rest_bin, standard_entry_class, [entry | acc])
+
+        {:error, error} ->
+          {:error, error}
+      end
+    end
   end
 
   defp do_parse_entries(bin, _, acc) do
     {:ok, acc |> Enum.reverse(), bin}
+  end
+
+  defp parse_addenda(bin) do
+    case do_parse_addenda(bin, []) do
+      {:ok, [], _} ->
+        {:error, :noaddenda}
+
+      {:ok, addenda, rest_bin} ->
+        {:ok, addenda, rest_bin}
+    end
+  end
+
+  defp do_parse_addenda(
+         <<
+           ?7,
+           addendum_type_code::binary-size(2),
+           payment_related_data::binary-size(80),
+           addendum_sequence_number::binary-size(4),
+           entry_detail_sequence_number::binary-size(7),
+           "\n",
+           rest_bin::binary
+         >>,
+         acc
+       ) do
+    {addendum_type_code, ""} = Integer.parse(addendum_type_code)
+    {addendum_sequence_number, ""} = Integer.parse(addendum_sequence_number)
+
+    {entry_detail_sequence_number, ""} =
+      Integer.parse(entry_detail_sequence_number)
+
+    addendum =
+      %Addendum{
+        addendum_type_code: addendum_type_code,
+        payment_related_data: payment_related_data,
+        addendum_sequence_number: addendum_sequence_number,
+        entry_detail_sequence_number: entry_detail_sequence_number
+      }
+      |> Addendum.validate()
+
+    do_parse_addenda(rest_bin, [addendum | acc])
+  end
+
+  defp do_parse_addenda(rest_bin, acc) do
+    {:ok, Enum.reverse(acc), rest_bin}
   end
 
   defp parse_control_record(<<
@@ -297,23 +354,8 @@ defmodule Nacha.Parser do
     {service_class_code, ""} = Integer.parse(service_class_code)
     {total_debits, ""} = Integer.parse(total_debits)
     {total_credits, ""} = Integer.parse(total_credits)
-    reserved = String.trim(reserved)
-
-    reserved =
-      if reserved == "" do
-        nil
-      else
-        reserved
-      end
-
-    message_auth_code = String.trim(message_auth_code)
-
-    message_auth_code =
-      if message_auth_code == "" do
-        nil
-      else
-        message_auth_code
-      end
+    reserved = trim_non_empty_string(reserved)
+    message_auth_code = trim_non_empty_string(message_auth_code)
 
     batch_control =
       BatchControl.validate(%BatchControl{

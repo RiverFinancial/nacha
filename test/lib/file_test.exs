@@ -1,4 +1,5 @@
 defmodule Nacha.FileTest do
+  # test fixture copying from https://github.com/moov-io/ach/tree/master/test
   use ExUnit.Case, async: true
 
   alias Nacha.{Batch, Entry, Records.EntryDetail}
@@ -210,7 +211,34 @@ defmodule Nacha.FileTest do
         )
 
       assert {:ok, file} ==
-               NachaFile.read("./test/fixtures/achfiles/sample2.ach")
+               NachaFile.read("./test/fixtures/achfiles/sample1.ach")
+    end
+
+    test "return error file if file is of invalid header format" do
+      assert {:error, :invalid_header_format} ==
+               NachaFile.read("./test/fixtures/achfiles/incorrect-sample1.ach")
+    end
+
+    test "ach" do
+      assert {:ok, _file} = NachaFile.read("./test/fixtures/achfiles/ack.ach")
+    end
+
+    test "adv" do
+      assert {:ok, _file} = NachaFile.read("./test/fixtures/achfiles/adv.ach")
+    end
+
+    test "arc debit" do
+      assert {:ok, _file} =
+               NachaFile.read("./test/fixtures/achfiles/arc-debit.ach")
+    end
+
+    test "boc" do
+      assert {:ok, _file} = NachaFile.read("./test/fixtures/achfiles/boc.ach")
+    end
+
+    test "ccd-debit" do
+      assert {:ok, _file} =
+               NachaFile.read("./test/fixtures/achfiles/ccd-debit.ach")
     end
   end
 end
