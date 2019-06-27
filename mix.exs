@@ -9,6 +9,7 @@ defmodule Nacha.Mixfile do
       start_permanent: Mix.env() == :prod,
       description: description(),
       package: package(),
+      aliases: aliases(),
       deps: deps(),
       name: "Nacha",
       source_url: "https://github.com/inabsentia/nacha.ex"
@@ -24,7 +25,8 @@ defmodule Nacha.Mixfile do
   defp deps do
     [
       {:ex_doc, ">= 0.0.0", only: :dev},
-      {:mix_test_watch, "~> 0.8", only: :dev, runtime: false}
+      {:mix_test_watch, "~> 0.8", only: :dev, runtime: false},
+      {:dialyxir, "~> 1.0.0-rc.6", only: [:dev, :test], runtime: false}
     ]
   end
 
@@ -36,11 +38,20 @@ defmodule Nacha.Mixfile do
     """
   end
 
+  defp aliases do
+    [
+      "lint.all": [
+        "format --check-formatted",
+        "dialyzer --halt-exit-status"
+      ]
+    ]
+  end
+
   defp package do
     [
       maintainers: ["Brent Yoder"],
       licenses: ["Apache 2.0"],
-      links: %{"GitHub" => "https://github.com/inabsentia/nacha.ex"}
+      links: %{"GitHub" => "https://github.com/AltoFinancial/nacha"}
     ]
   end
 end

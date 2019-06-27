@@ -217,11 +217,13 @@ defmodule Nacha.FileTest do
     end
 
     test "return nacha file if file is in valid format" do
-      {:ok, file} = NachaFile.build(
-        @entries,
-        @valid_params
-      )
-      assert {:ok, file} == NachaFile.read("./test/fixtures/sample2.ach")
+      {:ok, file} =
+        NachaFile.build(
+          @entries,
+          @valid_params
+        )
+
+      assert {:ok, file} == NachaFile.read("./test/fixtures/achfiles/sample2.ach")
     end
   end
 end

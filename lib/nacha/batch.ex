@@ -31,7 +31,7 @@ defmodule Nacha.Batch do
   @doc """
   Build a valid batch with necessary generated values.
   """
-  @spec build(entry_list, %{atom => any}) :: __MODULE__.t()
+  @spec build(entry_list, %{atom => any}) :: {:ok, t()} | {:error, t()}
   def build(entries, params) do
     params
     |> build_params(entries)

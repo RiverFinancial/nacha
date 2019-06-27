@@ -33,7 +33,8 @@ defmodule Nacha.File do
   @doc """
   Build a valid file with necessary generated values.
   """
-  @spec build(list(EntryDetail.t()), %{atom => any}) :: __MODULE__.t()
+  @spec build(list(EntryDetail.t()), %{atom => any}) ::
+          {:ok, t()} | {:error, t()}
   def build(entries, params) do
     params
     |> build_params

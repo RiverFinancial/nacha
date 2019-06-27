@@ -9,7 +9,7 @@ defmodule Nacha.Parser do
   alias Nacha.Records.BatchHeader, as: BatchHeader
   alias Nacha.Records.FileControl, as: Control
 
-  @spec decode(iodata) :: {:ok, File.t()} | {:error, term()}
+  @spec decode(iodata) :: {:ok, NachaFile.t()} | {:error, term()}
   def decode(input) do
     bin = IO.iodata_to_binary(input)
 
