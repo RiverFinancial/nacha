@@ -46,7 +46,7 @@ defmodule Nacha.File do
   def read(filePath) do
     with {:ok, content} <- File.read(filePath),
          {:ok, file} <- Parser.decode(content) do
-      validate(file)
+      {:ok, file}
     end
   end
 
@@ -101,7 +101,8 @@ defmodule Nacha.File do
       company_name: params.immediate_origin_name,
       effective_date: params.effective_date,
       descriptive_date: Map.get(params, :descriptive_date),
-      odfi_id: params.immediate_destination,
+      # immediate_destination is of 9 digits(the first one is always blank so we exclude it. and the last digit is check digit)
+      odfi_id: String.slice(params.immediate_destination, 0..7),
       standard_entry_class: sec
     })
     |> case do

@@ -44,16 +44,22 @@ defmodule Nacha.Parser do
     {total_credits, ""} = Integer.parse(total_credits)
     {entry_hash, ""} = Integer.parse(entry_hash)
 
-    {:ok,
-     %Control{
-       batch_count: batch_count,
-       block_count: block_count,
-       entry_count: entry_count,
-       entry_hash: entry_hash,
-       total_debits: total_debits,
-       total_credits: total_credits,
-       reserved: trim_non_empty_string(reserved)
-     }}
+    file_control =
+      Control.validate(%Control{
+        batch_count: batch_count,
+        block_count: block_count,
+        entry_count: entry_count,
+        entry_hash: entry_hash,
+        total_debits: total_debits,
+        total_credits: total_credits,
+        reserved: trim_non_empty_string(reserved)
+      })
+
+    if file_control.valid? do
+      {:ok, file_control}
+    else
+      {:error, :invalid_file_control_format}
+    end
   end
 
   defp parse_file_control(r) do
@@ -62,8 +68,8 @@ defmodule Nacha.Parser do
   end
 
   defp parse_file_header(
-         <<?1, priority_code::binary-size(2),
-           immediate_destination::binary-size(10),
+         <<?1, priority_code::binary-size(2), " ",
+           immediate_destination::binary-size(9),
            immediate_origin::binary-size(10), creation_date::binary-size(6),
            creation_time::binary-size(4), file_id_modifier::binary-size(1),
            record_size::binary-size(3), block_size::binary-size(2),
@@ -142,23 +148,8 @@ defmodule Nacha.Parser do
            batch_number::binary-size(7), "\n", rest_bin::binary>>,
          acc
        ) do
-    discretionary_data = String.trim(discretionary_data)
-
-    discretionary_data =
-      if discretionary_data == "" do
-        nil
-      else
-        discretionary_data
-      end
-
-    entry_description = String.trim(entry_description)
-
-    entry_description =
-      if entry_description == "" do
-        nil
-      else
-        entry_description
-      end
+    discretionary_data = trim_non_empty_string(discretionary_data)
+    entry_description = trim_non_empty_string(entry_description)
 
     {batch_number, ""} = Integer.parse(batch_number)
     {service_class_code, ""} = Integer.parse(service_class_code)
@@ -184,32 +175,37 @@ defmodule Nacha.Parser do
         descriptive_date
       end
 
-    batch_header = %BatchHeader{
-      record_type_code: 5,
-      service_class_code: service_class_code,
-      company_name: String.trim(company_name),
-      discretionary_data: discretionary_data,
-      company_id: company_id,
-      standard_entry_class: standard_entry_class,
-      entry_description: entry_description,
-      descriptive_date: descriptive_date,
-      effective_date: effective_date,
-      settlement_date: settlement_date,
-      originator_status: originator_status,
-      odfi_id: odfi_id,
-      batch_number: batch_number
-    }
+    batch_header =
+      BatchHeader.validate(%BatchHeader{
+        record_type_code: 5,
+        service_class_code: service_class_code,
+        company_name: String.trim(company_name),
+        discretionary_data: discretionary_data,
+        company_id: String.trim(company_id),
+        standard_entry_class: standard_entry_class,
+        entry_description: entry_description,
+        descriptive_date: descriptive_date,
+        effective_date: effective_date,
+        settlement_date: settlement_date,
+        originator_status: originator_status,
+        odfi_id: odfi_id,
+        batch_number: batch_number
+      })
 
-    {:ok, entries, rest_bin} = parse_entries(rest_bin, standard_entry_class)
-    {:ok, control_record, rest_bin} = parse_control_record(rest_bin)
+    if batch_header.valid? do
+      {:ok, entries, rest_bin} = parse_entries(rest_bin, standard_entry_class)
+      {:ok, control_record, rest_bin} = parse_control_record(rest_bin)
 
-    batch = %Batch{
-      header_record: batch_header,
-      entries: entries,
-      control_record: control_record
-    }
+      batch = %Batch{
+        header_record: batch_header,
+        entries: entries,
+        control_record: control_record
+      }
 
-    do_parse_batches(rest_bin, [batch | acc])
+      do_parse_batches(rest_bin, [batch | acc])
+    else
+      {:error, :invalid_batch_header_format}
+    end
   end
 
   defp do_parse_batches(
