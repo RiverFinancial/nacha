@@ -1,26 +1,26 @@
 defmodule Nacha.FileTest do
+  # test fixture copying from https://github.com/moov-io/ach/tree/master/test
   use ExUnit.Case, async: true
 
   alias Nacha.{Batch, Entry, File, Records.Addendum, Records.EntryDetail}
+  alias Nacha.{Batch, Entry, Records.EntryDetail}
+  alias Nacha.File, as: NachaFile
 
   @entries [
-    %Entry{
-      record: %EntryDetail{
-        transaction_code: "22",
-        rdfi_id: 11_111_111,
-        check_digit: 9,
-        account_number: "012345678",
-        amount: 100,
-        individual_id: "0987654321",
-        individual_name: "Bob Loblaw",
-        standard_entry_class: "PPD",
-        trace_id: "12345678",
-        trace_number: 1
-      },
-      addenda: %Addendum{payment_related_data: "More Info"}
-    },
-    %Entry{
-      record: %EntryDetail{
+    Entry.build(%EntryDetail{
+      transaction_code: "22",
+      rdfi_id: 11_111_111,
+      check_digit: 9,
+      account_number: "012345678",
+      amount: 100,
+      individual_id: "0987654321",
+      individual_name: "Bob Loblaw",
+      standard_entry_class: "PPD",
+      trace_id: "12345678",
+      trace_number: 1
+    }),
+    Entry.build(
+      %EntryDetail{
         transaction_code: "27",
         rdfi_id: 22_222_222,
         check_digit: 9,
@@ -30,99 +30,94 @@ defmodule Nacha.FileTest do
         individual_name: "Bob Loblaw",
         standard_entry_class: "CCD",
         trace_id: "12345678",
+        addenda_indicator: 1,
         trace_number: 2
-      }
-    },
-    %Entry{
-      record: %EntryDetail{
-        transaction_code: "22",
-        rdfi_id: 33_333_333,
-        check_digit: 9,
-        account_number: "234567890",
-        amount: 100,
-        individual_id: "8765432109",
-        individual_name: "Bob Loblaw",
-        standard_entry_class: "CCD",
-        trace_id: "12345678",
-        trace_number: 3
-      }
-    },
-    %Entry{
-      record: %EntryDetail{
-        transaction_code: "27",
-        rdfi_id: 44_444_444,
-        check_digit: 9,
-        account_number: "345678901",
-        amount: 200,
-        individual_id: "7654321098",
-        individual_name: "Bob Loblaw",
-        standard_entry_class: "PPD",
-        trace_id: "12345678",
-        trace_number: 4
-      }
-    },
-    %Entry{
-      record: %EntryDetail{
-        transaction_code: "37",
-        rdfi_id: 55_555_555,
-        check_digit: 9,
-        account_number: "456789012",
-        amount: 444,
-        individual_id: "6543210987",
-        individual_name: "Bob Loblaw",
-        standard_entry_class: "CCD",
-        trace_id: "12345678",
-        trace_number: 5
-      }
-    },
-    %Entry{
-      record: %EntryDetail{
-        transaction_code: "32",
-        rdfi_id: 66_666_666,
-        check_digit: 9,
-        account_number: "567890123",
-        amount: 200,
-        individual_id: "5432109876",
-        individual_name: "Bob Loblaw",
-        standard_entry_class: "PPD",
-        trace_id: "12345678",
-        trace_number: 6
-      }
-    },
-    %Entry{
-      record: %EntryDetail{
-        transaction_code: "22",
-        rdfi_id: 77_777_777,
-        check_digit: 9,
-        account_number: "678901234",
-        amount: 666,
-        individual_id: "4321098765",
-        individual_name: "Bob Loblaw",
-        standard_entry_class: "PPD",
-        trace_id: "12345678",
-        trace_number: 7
-      }
-    },
-    %Entry{
-      record: %EntryDetail{
-        transaction_code: "37",
-        rdfi_id: 88_888_888,
-        check_digit: 9,
-        account_number: "789012345",
-        amount: 300,
-        individual_id: "3210987654",
-        individual_name: "Bob Loblaw",
-        standard_entry_class: "PPD",
-        trace_id: "12345678",
-        trace_number: 8
-      }
-    }
+      },
+      [
+        %Addendum{
+          payment_related_data: "More Info",
+          entry_detail_sequence_number: 1
+        }
+      ]
+    ),
+    Entry.build(%EntryDetail{
+      transaction_code: "22",
+      rdfi_id: 33_333_333,
+      check_digit: 9,
+      account_number: "234567890",
+      amount: 100,
+      individual_id: "8765432109",
+      individual_name: "Bob Loblaw",
+      standard_entry_class: "CCD",
+      trace_id: "12345678",
+      trace_number: 3
+    }),
+    Entry.build(%EntryDetail{
+      transaction_code: "27",
+      rdfi_id: 44_444_444,
+      check_digit: 9,
+      account_number: "345678901",
+      amount: 200,
+      individual_id: "7654321098",
+      individual_name: "Bob Loblaw",
+      standard_entry_class: "PPD",
+      trace_id: "12345678",
+      trace_number: 4
+    }),
+    Entry.build(%EntryDetail{
+      transaction_code: "37",
+      rdfi_id: 55_555_555,
+      check_digit: 9,
+      account_number: "456789012",
+      amount: 444,
+      individual_id: "6543210987",
+      individual_name: "Bob Loblaw",
+      standard_entry_class: "CCD",
+      trace_id: "12345678",
+      trace_number: 5
+    }),
+    Entry.build(%EntryDetail{
+      transaction_code: "32",
+      rdfi_id: 66_666_666,
+      check_digit: 9,
+      account_number: "567890123",
+      amount: 200,
+      individual_id: "5432109876",
+      individual_name: "Bob Loblaw",
+      standard_entry_class: "PPD",
+      trace_id: "12345678",
+      trace_number: 6
+    }),
+    Entry.build(%EntryDetail{
+      transaction_code: "22",
+      rdfi_id: 77_777_777,
+      check_digit: 9,
+      account_number: "678901234",
+      amount: 666,
+      individual_id: "4321098765",
+      individual_name: "Bob Loblaw",
+      standard_entry_class: "PPD",
+      trace_id: "12345678",
+      trace_number: 7
+    }),
+    Entry.build(%EntryDetail{
+      transaction_code: "37",
+      rdfi_id: 88_888_888,
+      check_digit: 9,
+      account_number: "789012345",
+      amount: 300,
+      individual_id: "3210987654",
+      individual_name: "Bob Loblaw",
+      standard_entry_class: "PPD",
+      trace_id: "12345678",
+      trace_number: 8
+    })
   ]
 
   @valid_params %{
     effective_date: ~D[2017-01-01],
-    immediate_destination: 123_456_789,
-    immediate_origin: 1_234_567_890,
+    immediate_destination: "123456789",
+    immediate_origin: "1234567890",
     immediate_destination_name: "My Bank, Inc.",
     immediate_origin_name: "Sell Co",
     creation_date: ~D[2017-01-01],
@@ -157,13 +152,13 @@ defmodule Nacha.FileTest do
 
   describe "building a file" do
     setup(context) do
-      {:ok, file} = File.build(@entries, @valid_params)
+      {:ok, file} = NachaFile.build(@entries, @valid_params)
 
       Map.put(context, :subject, file)
     end
 
     test "is valid with valid params", %{subject: file} do
-      assert File.valid?(file)
+      assert NachaFile.valid?(file)
     end
 
     test "builds a batch from the entries", %{subject: %{batches: batches}} do
@@ -197,9 +192,9 @@ defmodule Nacha.FileTest do
   end
 
   test "formatting a file as a string" do
-    {:ok, file} = File.build(@entries, @valid_params)
+    {:ok, file} = NachaFile.build(@entries, @valid_params)
 
-    string = File.to_string(file)
+    string = NachaFile.to_string(file)
 
     assert string == @sample_file_string
   end
@@ -207,9 +202,53 @@ defmodule Nacha.FileTest do
   test "doesn't add filler records for a full block" do
     {:ok, file} = @entries |> Enum.slice(2, 4) |> File.build(@valid_params)
 
-    lines = file |> File.to_string() |> String.split("\n")
+    lines = file |> NachaFile.to_string() |> String.split("\n")
 
     assert length(lines) == 10
     refute List.last(lines) =~ ~r/^9+$/
+  end
+
+  describe "parse/1" do
+    test "return error if file doesn't exist" do
+      assert {:error, :enoent} == NachaFile.parse("./non_existing")
+    end
+
+    test "return nacha file if file is in valid format" do
+      {:ok, file} =
+        NachaFile.build(
+          @entries,
+          @valid_params
+        )
+
+      assert {:ok, file} ==
+               NachaFile.parse("./test/fixtures/achfiles/sample1.ach")
+    end
+
+    test "return error file if file is of invalid header format" do
+      assert {:error, :invalid_file_header_format} ==
+               NachaFile.parse("./test/fixtures/achfiles/incorrect-sample1.ach")
+    end
+
+    test "ach" do
+      assert {:ok, _file} = NachaFile.parse("./test/fixtures/achfiles/ack.ach")
+    end
+
+    test "adv" do
+      assert {:ok, _file} = NachaFile.parse("./test/fixtures/achfiles/adv.ach")
+    end
+
+    test "arc debit" do
+      assert {:ok, _file} =
+               NachaFile.parse("./test/fixtures/achfiles/arc-debit.ach")
+    end
+
+    test "boc" do
+      assert {:ok, _file} = NachaFile.parse("./test/fixtures/achfiles/boc.ach")
+    end
+
+    test "ccd-debit" do
+      assert {:ok, _file} =
+               NachaFile.parse("./test/fixtures/achfiles/ccd-debit.ach")
+    end
   end
 end

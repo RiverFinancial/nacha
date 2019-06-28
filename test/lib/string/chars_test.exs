@@ -27,16 +27,16 @@ defmodule String.CharsTest do
   }
   @valid_file_params %{
     batch_number: 1,
-    company_id: 1_234_567_890,
+    company_id: "1234567890",
     company_name: "Sell Co",
     effective_date: ~D[2017-01-01],
-    odfi_id: 12_345_678,
+    odfi_id: "12345678",
     standard_entry_class: "PPD"
   }
   @valid_batch_params %{
     effective_date: ~D[2017-01-01],
-    immediate_destination: 123_456_789,
-    immediate_origin: 1_234_567_890,
+    immediate_destination: "123456789",
+    immediate_origin: "1234567890",
     immediate_destination_name: "My Bank, Inc.",
     immediate_origin_name: "Sell Co",
     creation_date: ~D[2017-01-01],
