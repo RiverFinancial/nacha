@@ -11,6 +11,7 @@ defmodule Nacha.File do
   alias Nacha.{Batch, Records.EntryDetail}
   alias Nacha.Records.FileHeader, as: Header
   alias Nacha.Records.FileControl, as: Control
+  alias Nacha.Parser
 
   @filler_record "\n9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999"
 
@@ -32,12 +33,21 @@ defmodule Nacha.File do
   @doc """
   Build a valid file with necessary generated values.
   """
-  @spec build(list(EntryDetail.t()), %{atom => any}) :: __MODULE__.t()
+  @spec build(list(EntryDetail.t()), %{atom => any}) ::
+          {:ok, t()} | {:error, t()}
   def build(entries, params) do
     params
     |> build_params
     |> do_build(entries)
     |> validate
+  end
+
+  @spec parse(String.t()) ::
+          {:ok, t()} | {:error, File.posix() | Parser.decode_error()}
+  def parse(filePath) do
+    with {:ok, content} <- File.read(filePath) do
+      Parser.decode(content)
+    end
   end
 
   @spec to_string(__MODULE__.t()) :: String.t()
@@ -91,7 +101,8 @@ defmodule Nacha.File do
       company_name: params.immediate_origin_name,
       effective_date: params.effective_date,
       descriptive_date: Map.get(params, :descriptive_date),
-      odfi_id: params.immediate_destination,
+      # immediate_destination is of 9 digits(the first one is always blank so we exclude it. and the last digit is check digit)
+      odfi_id: String.slice(params.immediate_destination, 0..7),
       standard_entry_class: sec
     })
     |> case do

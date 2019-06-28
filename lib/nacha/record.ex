@@ -56,10 +56,11 @@ defmodule Nacha.Record do
   @spec to_string(struct, list(key_def)) :: String.t()
   def to_string(record, keys), do: record |> to_iolist(keys) |> to_string
 
-  @spec to_iolist(struct, list(key_def)) :: iolist
+  @spec to_iolist(list(struct), list(key_def)) :: iolist
   def to_iolist(records, keys) when is_list(records),
     do: records |> Stream.map(&to_iolist(&1, keys)) |> Enum.intersperse("\n")
 
+  @spec to_iolist(struct, list(key_def)) :: iolist
   def to_iolist(record, keys),
     do: Enum.reduce(keys, [], &[&2, format_field(record, &1)])
 
