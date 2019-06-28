@@ -8,7 +8,7 @@ defmodule Nacha.File do
 
   import Kernel, except: [to_string: 1]
 
-  alias Nacha.{Batch, Records.EntryDetail}
+  alias Nacha.{Batch, Entry}
   alias Nacha.Records.FileHeader, as: Header
   alias Nacha.Records.FileControl, as: Control
   alias Nacha.Parser
@@ -31,10 +31,22 @@ defmodule Nacha.File do
           errors: list({atom, String.t()})
         }
 
+  @type build_file_params :: %{
+          optional(:creation_date) => Date.t(),
+          optional(:creation_time) => Time.t(),
+          optional(:effective_date) => Date.t(),
+          optional(:descriptive_date) => Date.t(),
+          optional(:file_id_modifier) => String.t(),
+          immediate_destination: String.t(),
+          immediate_origin: String.t(),
+          immediate_destination_name: String.t(),
+          immediate_origin_name: String.t()
+        }
+
   @doc """
   Build a valid file with necessary generated values.
   """
-  @spec build(list(EntryDetail.t()), %{atom => any}) ::
+  @spec build(list(Entry.t()), build_file_params) ::
           {:ok, t()} | {:error, t()}
   def build(entries, params) do
     params
@@ -45,8 +57,8 @@ defmodule Nacha.File do
 
   @spec parse(String.t()) ::
           {:ok, t()} | {:error, File.posix() | Parser.decode_error()}
-  def parse(filePath) do
-    with {:ok, content} <- File.read(filePath) do
+  def parse(file_path) do
+    with {:ok, content} <- File.read(file_path) do
       Parser.decode(content)
     end
   end
