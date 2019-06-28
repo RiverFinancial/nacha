@@ -3,16 +3,6 @@ defmodule Nacha do
   Documentation for Nacha.
   """
 
-  @doc """
-  Hello world.
-
-  ## Examples
-
-      iex> Nacha.hello
-      :world
-
-  """
-  def hello do
-    :world
-  end
+  defdelegate build(entry_details, params), to: Nacha.File
+  defdelegate parse(file_path), to: Nacha.File
 end
