@@ -42,11 +42,11 @@ defmodule Nacha.File do
     |> validate
   end
 
-  @spec read(String.t()) :: {:ok, t()} | {:error, File.posix()}
-  def read(filePath) do
-    with {:ok, content} <- File.read(filePath),
-         {:ok, file} <- Parser.decode(content) do
-      {:ok, file}
+  @spec parse(String.t()) ::
+          {:ok, t()} | {:error, File.posix() | Parser.decode_error()}
+  def parse(filePath) do
+    with {:ok, content} <- File.read(filePath) do
+      Parser.decode(content)
     end
   end
 

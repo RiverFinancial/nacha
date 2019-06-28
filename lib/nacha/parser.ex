@@ -9,6 +9,16 @@ defmodule Nacha.Parser do
   alias Nacha.Records.{Addendum, BatchHeader}
   alias Nacha.Records.FileControl, as: Control
 
+  @type decode_error ::
+          {:error,
+           :invalid_file_control
+           | :invalid_file_control_format
+           | :invalid_file_header
+           | :invalid_file_header_format
+           | :invalid_batch_header
+           | :no_required_addenda
+           | :invalid_batch_control}
+
   @spec decode(iodata) :: {:ok, NachaFile.t()} | {:error, term()}
   def decode(input) do
     bin = IO.iodata_to_binary(input)
@@ -57,11 +67,11 @@ defmodule Nacha.Parser do
     if file_control.valid? do
       {:ok, file_control}
     else
-      {:error, :invalid_file_control_format}
+      {:error, :invalid_file_control}
     end
   end
 
-  defp parse_file_control(r) do
+  defp parse_file_control(_) do
     {:error, :invalid_file_control_format}
   end
 
@@ -101,11 +111,11 @@ defmodule Nacha.Parser do
     if header.valid? do
       {:ok, header, rest_bin}
     else
-      {:error, :invalid_header}
+      {:error, :invalid_file_header}
     end
   end
 
-  defp parse_file_header(_), do: {:error, :invalid_header_format}
+  defp parse_file_header(_), do: {:error, :invalid_file_header_format}
 
   defp trim_non_empty_string(str) do
     str = String.trim(str)
@@ -202,7 +212,7 @@ defmodule Nacha.Parser do
 
       do_parse_batches(rest_bin, [batch | acc])
     else
-      {:error, :invalid_batch_header_format}
+      {:error, :invalid_batch_header}
     end
   end
 
@@ -292,7 +302,7 @@ defmodule Nacha.Parser do
   defp parse_addenda(bin) do
     case do_parse_addenda(bin, []) do
       {:ok, [], _} ->
-        {:error, :noaddenda}
+        {:error, :no_required_addenda}
 
       {:ok, addenda, rest_bin} ->
         {:ok, addenda, rest_bin}

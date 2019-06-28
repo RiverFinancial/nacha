@@ -49,7 +49,7 @@ defmodule Nacha.Mixfile do
 
   defp package do
     [
-      maintainers: ["Brent Yoder"],
+      maintainers: ["Alex Leishman", "KaFai Choi"],
       licenses: ["Apache 2.0"],
       links: %{"GitHub" => "https://github.com/AltoFinancial/nacha"}
     ]

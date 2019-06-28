@@ -198,9 +198,9 @@ defmodule Nacha.FileTest do
     refute List.last(lines) =~ ~r/^9+$/
   end
 
-  describe "read/1" do
+  describe "parse/1" do
     test "return error if file doesn't exist" do
-      assert {:error, :enoent} == File.read("./non_existing")
+      assert {:error, :enoent} == NachaFile.parse("./non_existing")
     end
 
     test "return nacha file if file is in valid format" do
@@ -211,34 +211,34 @@ defmodule Nacha.FileTest do
         )
 
       assert {:ok, file} ==
-               NachaFile.read("./test/fixtures/achfiles/sample1.ach")
+               NachaFile.parse("./test/fixtures/achfiles/sample1.ach")
     end
 
     test "return error file if file is of invalid header format" do
-      assert {:error, :invalid_header_format} ==
-               NachaFile.read("./test/fixtures/achfiles/incorrect-sample1.ach")
+      assert {:error, :invalid_file_header_format} ==
+               NachaFile.parse("./test/fixtures/achfiles/incorrect-sample1.ach")
     end
 
     test "ach" do
-      assert {:ok, _file} = NachaFile.read("./test/fixtures/achfiles/ack.ach")
+      assert {:ok, _file} = NachaFile.parse("./test/fixtures/achfiles/ack.ach")
     end
 
     test "adv" do
-      assert {:ok, _file} = NachaFile.read("./test/fixtures/achfiles/adv.ach")
+      assert {:ok, _file} = NachaFile.parse("./test/fixtures/achfiles/adv.ach")
     end
 
     test "arc debit" do
       assert {:ok, _file} =
-               NachaFile.read("./test/fixtures/achfiles/arc-debit.ach")
+               NachaFile.parse("./test/fixtures/achfiles/arc-debit.ach")
     end
 
     test "boc" do
-      assert {:ok, _file} = NachaFile.read("./test/fixtures/achfiles/boc.ach")
+      assert {:ok, _file} = NachaFile.parse("./test/fixtures/achfiles/boc.ach")
     end
 
     test "ccd-debit" do
       assert {:ok, _file} =
-               NachaFile.read("./test/fixtures/achfiles/ccd-debit.ach")
+               NachaFile.parse("./test/fixtures/achfiles/ccd-debit.ach")
     end
   end
 end
