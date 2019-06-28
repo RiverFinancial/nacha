@@ -27,6 +27,7 @@ defmodule Nacha.File do
           header_record: Header.t(),
           batches: list(Batch.t()),
           control_record: Control.t(),
+          failed: list({:error, Batch.t()}),
           errors: list({atom, String.t()})
         }
 
@@ -115,7 +116,7 @@ defmodule Nacha.File do
     control_params =
       %{batch_count: length(file.batches)}
       |> add_entry_count(file)
-      |> add_block_count
+      |> add_block_count(file)
       |> add_entry_hash(file)
       |> add_total_debits(file)
       |> add_total_credits(file)
@@ -132,10 +133,19 @@ defmodule Nacha.File do
 
   defp generate_filler_records(0), do: []
 
-  defp line_count(%__MODULE__{control_record: control}), do: line_count(control)
+  defp line_count(%__MODULE__{batches: batches, control_record: control}),
+    do: line_count(batches, control)
 
-  defp line_count(%{entry_count: entry_count, batch_count: batch_count}),
-    do: entry_count + 2 * batch_count + 2
+  defp line_count(batches, %{entry_count: entry_count, batch_count: batch_count}),
+       do: entry_count + addenda_count(batches) + 2 * batch_count + 2
+
+  defp addenda_count(batches) do
+    batches
+    |> Stream.flat_map(fn batch ->
+      Enum.map(batch.entries, &Enum.count(&1.addenda))
+    end)
+    |> Enum.sum()
+  end
 
   defp fill_count(lines) do
     case rem(lines, 10) do
@@ -148,13 +158,13 @@ defmodule Nacha.File do
     Map.put(
       params,
       :entry_count,
-      Enum.reduce(batches, 0, &(&2 + &1.control_record.entry_count))
+      batches |> Stream.map(& &1.control_record.entry_count) |> Enum.sum()
     )
   end
 
-  defp add_block_count(params) do
+  defp add_block_count(params, file) do
     count =
-      (line_count(params) / 10)
+      (line_count(file.batches, params) / 10)
       |> Float.ceil()
       |> trunc
 

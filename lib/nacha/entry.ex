@@ -12,6 +12,17 @@ defmodule Nacha.Entry do
 
   @type t :: %__MODULE__{record: EntryDetail.t(), addenda: list(Addendum.t())}
 
+  @doc """
+  struct constructor function and run validation by default
+  """
+  @spec build(EntryDetail.t(), list(Addendum.t())) :: t()
+  def build(entry_detail, addenda \\ []) do
+    %__MODULE__{
+      record: entry_detail |> EntryDetail.validate(),
+      addenda: addenda |> Enum.map(&Addendum.validate/1)
+    }
+  end
+
   @spec to_string(__MODULE__.t()) :: String.t()
   def to_string(%__MODULE__{} = entry),
     do: entry |> to_iolist |> Kernel.to_string()

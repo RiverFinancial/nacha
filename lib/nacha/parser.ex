@@ -256,36 +256,29 @@ defmodule Nacha.Parser do
     {addenda_indicator, ""} = Integer.parse(addenda_indicator)
     {trace_number, ""} = Integer.parse(trace_number)
 
-    entry_detail =
-      %EntryDetail{
-        standard_entry_class: standard_entry_class,
-        transaction_code: transaction_code,
-        rdfi_id: rdfi_id,
-        check_digit: check_digit,
-        account_number: account_number,
-        amount: amount,
-        individual_id: individual_id,
-        individual_name: individual_name,
-        discretionary_data: discretionary_data,
-        addenda_indicator: addenda_indicator,
-        trace_id: trace_id,
-        trace_number: trace_number
-      }
-      |> EntryDetail.validate()
+    entry_detail = %EntryDetail{
+      standard_entry_class: standard_entry_class,
+      transaction_code: transaction_code,
+      rdfi_id: rdfi_id,
+      check_digit: check_digit,
+      account_number: account_number,
+      amount: amount,
+      individual_id: individual_id,
+      individual_name: individual_name,
+      discretionary_data: discretionary_data,
+      addenda_indicator: addenda_indicator,
+      trace_id: trace_id,
+      trace_number: trace_number
+    }
 
     if addenda_indicator == 0 do
-      entry = %Entry{
-        record: entry_detail
-      }
+      entry = Entry.build(entry_detail)
 
       do_parse_entries(rest_bin, standard_entry_class, [entry | acc])
     else
       case parse_addenda(rest_bin) do
         {:ok, addenda, rest_bin} ->
-          entry = %Entry{
-            record: entry_detail,
-            addenda: addenda
-          }
+          entry = Entry.build(entry_detail, addenda)
 
           do_parse_entries(rest_bin, standard_entry_class, [entry | acc])
 
@@ -327,14 +320,12 @@ defmodule Nacha.Parser do
     {entry_detail_sequence_number, ""} =
       Integer.parse(entry_detail_sequence_number)
 
-    addendum =
-      %Addendum{
-        addendum_type_code: addendum_type_code,
-        payment_related_data: payment_related_data,
-        addendum_sequence_number: addendum_sequence_number,
-        entry_detail_sequence_number: entry_detail_sequence_number
-      }
-      |> Addendum.validate()
+    addendum = %Addendum{
+      addendum_type_code: addendum_type_code,
+      payment_related_data: String.trim(payment_related_data),
+      addendum_sequence_number: addendum_sequence_number,
+      entry_detail_sequence_number: entry_detail_sequence_number
+    }
 
     do_parse_addenda(rest_bin, [addendum | acc])
   end
