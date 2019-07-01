@@ -51,7 +51,7 @@ defmodule Nacha.Records.AddendumTest do
                addenda_information:
                  "                                                ",
                addendum_sequence_number: 1,
-               date_of_death: "      ",
+               date_of_death: nil,
                entry_detail_sequence_number: 1,
                original_entry_trace_number: "992222220280389",
                original_rdfi_id: "12114039",

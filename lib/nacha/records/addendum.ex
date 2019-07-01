@@ -4,6 +4,8 @@ defmodule Nacha.Records.Addendum do
   """
   alias Nacha.Records.Addendum
 
+  import Nacha.Utils, only: [trim_non_empty_string: 1]
+
   @required [
     :record_type_code,
     :addendum_type_code,
@@ -121,7 +123,7 @@ defmodule Nacha.Records.Addendum do
     %Return{
       reason_code: reason_code,
       original_entry_trace_number: original_entry_trace_number,
-      date_of_death: date_of_death,
+      date_of_death: trim_non_empty_string(date_of_death),
       original_rdfi_id: original_rdfi_id,
       addenda_information: addenda_information,
       addendum_sequence_number: addendum_sequence_number,
