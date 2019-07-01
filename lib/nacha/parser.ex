@@ -9,6 +9,8 @@ defmodule Nacha.Parser do
   alias Nacha.Records.{Addendum, BatchHeader}
   alias Nacha.Records.FileControl, as: Control
 
+  import Nacha.Utils, only: [trim_non_empty_string: 1]
+
   @type decode_error ::
           {:error,
            :invalid_file_control
@@ -116,16 +118,6 @@ defmodule Nacha.Parser do
   end
 
   defp parse_file_header(_), do: {:error, :invalid_file_header_format}
-
-  defp trim_non_empty_string(str) do
-    str = String.trim(str)
-
-    if str == "" do
-      nil
-    else
-      str
-    end
-  end
 
   defp parse_ach_date(
          <<year::binary-size(2), month::binary-size(2), day::binary-size(2)>>
@@ -322,7 +314,7 @@ defmodule Nacha.Parser do
 
     addendum = %Addendum{
       addendum_type_code: addendum_type_code,
-      payment_related_data: String.trim(payment_related_data),
+      payment_related_data: payment_related_data,
       addendum_sequence_number: addendum_sequence_number,
       entry_detail_sequence_number: entry_detail_sequence_number
     }
