@@ -35,7 +35,8 @@ defmodule Nacha.FileTest do
       },
       [
         %Addendum{
-          payment_related_data: "More Info",
+          payment_related_data:
+            "More Info                                                                       ",
           entry_detail_sequence_number: 1
         }
       ]

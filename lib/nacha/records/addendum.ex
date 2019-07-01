@@ -44,7 +44,7 @@ defmodule Nacha.Records.Addendum do
     @type t :: %__MODULE__{
             reason_code: String.t(),
             original_entry_trace_number: String.t(),
-            date_of_death: Date.t(),
+            date_of_death: Date.t() | nil,
             original_rdfi_id: integer(),
             addenda_information: String.t(),
             addendum_sequence_number: integer(),
@@ -86,11 +86,12 @@ defmodule Nacha.Records.Addendum do
   def to_detail(%Addendum{
         addendum_type_code: 98,
         payment_related_data: <<
-          reason_code::binary-size(2),
+          reason_code::binary-size(3),
           original_entry_trace_number::binary-size(15),
           _::binary-size(6),
           original_rdfi_id::binary-size(8),
-          corrected_data::binary-size(29)
+          corrected_data::binary-size(29),
+          _::binary
         >>,
         addendum_sequence_number: addendum_sequence_number,
         entry_detail_sequence_number: entry_detail_sequence_number
@@ -108,11 +109,11 @@ defmodule Nacha.Records.Addendum do
   def to_detail(%Addendum{
         addendum_type_code: 99,
         payment_related_data: <<
-          reason_code::binary-size(2),
+          reason_code::binary-size(3),
           original_entry_trace_number::binary-size(15),
           date_of_death::binary-size(6),
           original_rdfi_id::binary-size(8),
-          addenda_information::binary-size(49)
+          addenda_information::binary
         >>,
         addendum_sequence_number: addendum_sequence_number,
         entry_detail_sequence_number: entry_detail_sequence_number

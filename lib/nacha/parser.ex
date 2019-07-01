@@ -322,7 +322,7 @@ defmodule Nacha.Parser do
 
     addendum = %Addendum{
       addendum_type_code: addendum_type_code,
-      payment_related_data: String.trim(payment_related_data),
+      payment_related_data: payment_related_data,
       addendum_sequence_number: addendum_sequence_number,
       entry_detail_sequence_number: entry_detail_sequence_number
     }
