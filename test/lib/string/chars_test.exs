@@ -15,7 +15,7 @@ defmodule String.CharsTest do
   @sample_entry %Entry{
     record: %EntryDetail{
       transaction_code: "22",
-      rdfi_id: 11_111_111,
+      rdfi_id: "11111111",
       check_digit: 9,
       account_number: "012345678",
       amount: 100,

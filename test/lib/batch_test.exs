@@ -9,7 +9,7 @@ defmodule Nacha.BatchTest do
     %Entry{
       record: %EntryDetail{
         transaction_code: "22",
-        rdfi_id: 99_999_999,
+        rdfi_id: "99999999",
         check_digit: 9,
         account_number: "012345678",
         amount: 100,
@@ -29,7 +29,7 @@ defmodule Nacha.BatchTest do
     %Entry{
       record: %EntryDetail{
         transaction_code: "32",
-        rdfi_id: 99_999_999,
+        rdfi_id: "99999999",
         check_digit: 9,
         account_number: "012345678",
         amount: 200,
@@ -44,7 +44,7 @@ defmodule Nacha.BatchTest do
     %Entry{
       record: %EntryDetail{
         transaction_code: "27",
-        rdfi_id: 99_999_999,
+        rdfi_id: "99999999",
         check_digit: 9,
         account_number: "012345678",
         amount: 200,
@@ -57,7 +57,7 @@ defmodule Nacha.BatchTest do
     %Entry{
       record: %EntryDetail{
         transaction_code: "37",
-        rdfi_id: 99_999_999,
+        rdfi_id: "99999999",
         check_digit: 9,
         account_number: "012345678",
         amount: 300,
@@ -134,7 +134,7 @@ defmodule Nacha.BatchTest do
     test "limits the entry hash to the 10 least significant digits" do
       {:ok, batch} =
         @entries
-        |> Enum.map(&update_rdfi(&1, 9_999_999_999))
+        |> Enum.map(&update_rdfi(&1, "9999999999"))
         |> Batch.build(@valid_params)
 
       assert batch.control_record.entry_hash == 9_999_999_996
@@ -172,6 +172,19 @@ defmodule Nacha.BatchTest do
       assert {:effective_date, "is required"} in batch.errors
       assert {:odfi_id, "is required"} in batch.errors
       assert {:standard_entry_class, "is required"} in batch.errors
+    end
+
+    test "add offset entry when with_offset is passed" do
+      offset = %Batch.Offset{
+        account_number: "012345678",
+        routing_number: "12345678",
+        account_type: :checking
+      }
+
+      {:ok, batch} = Batch.build(@entries, @valid_params, offset)
+
+      assert Enum.count(batch.entries) == 5
+      assert Batch.valid?(batch)
     end
   end
 

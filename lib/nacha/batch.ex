@@ -8,9 +8,10 @@ defmodule Nacha.Batch do
 
   import Kernel, except: [to_string: 1]
 
-  alias Nacha.Entry
+  alias Nacha.{Entry, Utils}
   alias Nacha.Records.BatchHeader, as: Header
   alias Nacha.Records.BatchControl, as: Control
+  alias Nacha.Records.EntryDetail
 
   @credit_codes ["22", "32"]
   @debit_codes ["27", "37"]
@@ -28,14 +29,32 @@ defmodule Nacha.Batch do
           errors: list({atom, String.t()})
         }
 
+  defmodule Offset do
+    @type t :: %__MODULE__{
+            routing_number: String.t(),
+            account_number: String.t(),
+            account_type: :checking | :saving
+          }
+    @enforce_keys [:routing_number, :account_number, :account_type]
+    defstruct @enforce_keys
+  end
+
   @doc """
   Build a valid batch with necessary generated values.
   """
-  @spec build(entry_list, %{atom => any}) :: {:ok, t()} | {:error, t()}
-  def build(entries, params) do
+  @spec build(entry_list, %{atom => any}, Offset.t() | nil) ::
+          {:ok, t()} | {:error, t()}
+  def build(entries, params, offset \\ nil) do
     params
     |> build_params(entries)
     |> do_build
+    |> (fn batch ->
+          if is_nil(offset) do
+            batch
+          else
+            add_offset(batch, offset)
+          end
+        end).()
     |> validate
   end
 
@@ -89,6 +108,87 @@ defmodule Nacha.Batch do
 
   defp build_control(params), do: Control |> struct(params)
 
+  defp get_offset_trace_number(entries) when is_list(entries) do
+    entries
+    |> Enum.at(Enum.count(entries) - 1)
+    |> (& &1.record.trace_number).()
+    |> :erlang.+(1)
+  end
+
+  # no need to add offset entry if total_debits and total_credits are the same
+  defp add_offset(
+         %__MODULE__{
+           control_record: %{
+             total_debits: amount,
+             total_credits: amount
+           }
+         } = batch,
+         _
+       ) do
+    batch
+  end
+
+  defp add_offset(
+         %__MODULE__{
+           header_record: header_record,
+           entries: entries,
+           control_record:
+             %{
+               total_debits: total_debits,
+               total_credits: total_credits
+             } = control_record
+         },
+         %Offset{
+           account_type: account_type
+         } = offset
+       ) do
+    {transaction_code, offset_amount, max_amount} =
+      case {account_type, total_debits - total_credits} do
+        {:checking, amount} when amount > 0 ->
+          {"22", amount, total_debits}
+
+        {:checking, amount} when amount < 0 ->
+          {"27", -amount, total_credits}
+
+        {:saving, amount} when amount > 0 ->
+          {"32", amount, total_debits}
+
+        {:saving, amount} when amount < 0 ->
+          {"37", -amount, total_credits}
+      end
+
+    offset_entry_detail = %EntryDetail{
+      transaction_code: transaction_code,
+      rdfi_id: offset.routing_number,
+      check_digit:
+        Utils.get_check_digit_from_rdfi_routing_number(offset.routing_number),
+      account_number: offset.account_number,
+      amount: offset_amount,
+      individual_id: "",
+      individual_name: "OFFSET",
+      standard_entry_class: header_record.standard_entry_class,
+      # ODFI routing number
+      trace_id: header_record.odfi_id,
+      trace_number: get_offset_trace_number(entries)
+    }
+
+    new_entries = entries ++ [Entry.build(offset_entry_detail, [])]
+
+    %__MODULE__{
+      header_record: %{
+        header_record
+        | service_class_code: @service_class_codes.mixed
+      },
+      entries: new_entries,
+      control_record: %{
+        control_record
+        | entry_hash: calculate_hash(new_entries),
+          total_debits: max_amount,
+          total_credits: max_amount
+      }
+    }
+  end
+
   defp validate(%{header_record: header, control_record: control} = batch) do
     case {Header.validate(header), Control.validate(control)} do
       {%{valid?: true} = header, %{valid?: true} = control} ->
@@ -116,7 +216,7 @@ defmodule Nacha.Batch do
 
   defp calculate_hash(entries) do
     entries
-    |> Stream.map(& &1.record.rdfi_id)
+    |> Enum.map(&String.to_integer(&1.record.rdfi_id))
     |> Enum.sum()
     |> Integer.digits()
     |> Enum.take(-10)

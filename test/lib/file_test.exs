@@ -2,14 +2,14 @@ defmodule Nacha.FileTest do
   # test fixture copying from https://github.com/moov-io/ach/tree/master/test
   use ExUnit.Case, async: true
 
-  alias Nacha.{Batch, Entry, File, Records.Addendum, Records.EntryDetail}
+  alias Nacha.{Batch, Entry, Records.Addendum, Records.EntryDetail}
   alias Nacha.{Batch, Entry, Records.EntryDetail}
   alias Nacha.File, as: NachaFile
 
   @entries [
     Entry.build(%EntryDetail{
       transaction_code: "22",
-      rdfi_id: 11_111_111,
+      rdfi_id: "11111111",
       check_digit: 9,
       account_number: "012345678",
       amount: 100,
@@ -22,7 +22,7 @@ defmodule Nacha.FileTest do
     Entry.build(
       %EntryDetail{
         transaction_code: "27",
-        rdfi_id: 22_222_222,
+        rdfi_id: "22222222",
         check_digit: 9,
         account_number: "123456789",
         amount: 200,
@@ -43,7 +43,7 @@ defmodule Nacha.FileTest do
     ),
     Entry.build(%EntryDetail{
       transaction_code: "22",
-      rdfi_id: 33_333_333,
+      rdfi_id: "33333333",
       check_digit: 9,
       account_number: "234567890",
       amount: 100,
@@ -55,7 +55,7 @@ defmodule Nacha.FileTest do
     }),
     Entry.build(%EntryDetail{
       transaction_code: "27",
-      rdfi_id: 44_444_444,
+      rdfi_id: "44444444",
       check_digit: 9,
       account_number: "345678901",
       amount: 200,
@@ -67,7 +67,7 @@ defmodule Nacha.FileTest do
     }),
     Entry.build(%EntryDetail{
       transaction_code: "37",
-      rdfi_id: 55_555_555,
+      rdfi_id: "55555555",
       check_digit: 9,
       account_number: "456789012",
       amount: 444,
@@ -79,7 +79,7 @@ defmodule Nacha.FileTest do
     }),
     Entry.build(%EntryDetail{
       transaction_code: "32",
-      rdfi_id: 66_666_666,
+      rdfi_id: "66666666",
       check_digit: 9,
       account_number: "567890123",
       amount: 200,
@@ -91,7 +91,7 @@ defmodule Nacha.FileTest do
     }),
     Entry.build(%EntryDetail{
       transaction_code: "22",
-      rdfi_id: 77_777_777,
+      rdfi_id: "77777777",
       check_digit: 9,
       account_number: "678901234",
       amount: 666,
@@ -103,7 +103,7 @@ defmodule Nacha.FileTest do
     }),
     Entry.build(%EntryDetail{
       transaction_code: "37",
-      rdfi_id: 88_888_888,
+      rdfi_id: "88888888",
       check_digit: 9,
       account_number: "789012345",
       amount: 300,
@@ -123,6 +123,12 @@ defmodule Nacha.FileTest do
     immediate_origin_name: "Sell Co",
     creation_date: ~D[2017-01-01],
     creation_time: ~T[12:00:00]
+  }
+
+  @offset %Batch.Offset{
+    account_number: "012345678",
+    routing_number: "12345678",
+    account_type: :checking
   }
 
   @sample_file_string Enum.join(
@@ -150,6 +156,34 @@ defmodule Nacha.FileTest do
                         ],
                         "\n"
                       )
+
+  @sample_file_string_with_offset Enum.join(
+                                    [
+                                      "101 12345678912345678901701011200A094101My Bank, Inc.          Sell Co                        ",
+                                      "5200Sell Co                             1234567890CCD                170101   1123456780000001",
+                                      "627222222229123456789        00000002009876543210     Bob Loblaw              1123456780000002",
+                                      "705More Info                                                                       00010000001",
+                                      "622333333339234567890        00000001008765432109     Bob Loblaw              0123456780000003",
+                                      "637555555559456789012        00000004446543210987     Bob Loblaw              0123456780000005",
+                                      "622123456781012345678        0000000544               OFFSET                  0123456780000006",
+                                      "820000000301234567880000000006440000000006441234567890                         123456780000001",
+                                      "5200Sell Co                             1234567890PPD                170101   1123456780000002",
+                                      "622111111119012345678        00000001000987654321     Bob Loblaw              0123456780000001",
+                                      "627444444449345678901        00000002007654321098     Bob Loblaw              0123456780000004",
+                                      "632666666669567890123        00000002005432109876     Bob Loblaw              0123456780000006",
+                                      "622777777779678901234        00000006664321098765     Bob Loblaw              0123456780000007",
+                                      "637888888889789012345        00000003003210987654     Bob Loblaw              0123456780000008",
+                                      "627123456781012345678        0000000466               OFFSET                  0123456780000009",
+                                      "820000000503012345640000000009660000000009661234567890                         123456780000002",
+                                      "9000002000002000000080424691352000000001610000000001610                                       ",
+                                      "9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999",
+                                      "9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999",
+                                      "9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999",
+                                      "9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999",
+                                      "9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999"
+                                    ],
+                                    "\n"
+                                  )
 
   describe "building a file" do
     setup(context) do
@@ -200,8 +234,15 @@ defmodule Nacha.FileTest do
     assert string == @sample_file_string
   end
 
+  test "formatting a file as a string with offset" do
+    {:ok, nacha_file} =
+      NachaFile.build(@entries, @valid_params, with_offset: @offset)
+
+    assert NachaFile.to_string(nacha_file) == @sample_file_string_with_offset
+  end
+
   test "doesn't add filler records for a full block" do
-    {:ok, file} = @entries |> Enum.slice(2, 4) |> File.build(@valid_params)
+    {:ok, file} = @entries |> Enum.slice(2, 4) |> NachaFile.build(@valid_params)
 
     lines = file |> NachaFile.to_string() |> String.split("\n")
 

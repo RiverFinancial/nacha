@@ -9,7 +9,7 @@ defmodule Nacha.Records.EntryDetail do
       {:standard_entry_class, :string, 0},
       {:record_type_code, :number, 1, 6},
       {:transaction_code, :string, 2},
-      {:rdfi_id, :number, 8},
+      {:rdfi_id, :string, 8},
       {:check_digit, :number, 1},
       {:account_number, :string, 17},
       {:amount, :number, 10},
