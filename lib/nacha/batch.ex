@@ -33,7 +33,7 @@ defmodule Nacha.Batch do
     @type t :: %__MODULE__{
             routing_number: String.t(),
             account_number: String.t(),
-            account_type: :checking | :saving
+            account_type: :checking | :savings
           }
     @enforce_keys [:routing_number, :account_number, :account_type]
     defstruct @enforce_keys
@@ -150,10 +150,10 @@ defmodule Nacha.Batch do
         {:checking, amount} when amount < 0 ->
           {"27", -amount, total_credits}
 
-        {:saving, amount} when amount > 0 ->
+        {:savings, amount} when amount > 0 ->
           {"32", amount, total_debits}
 
-        {:saving, amount} when amount < 0 ->
+        {:savings, amount} when amount < 0 ->
           {"37", -amount, total_credits}
       end
 
@@ -161,7 +161,7 @@ defmodule Nacha.Batch do
       transaction_code: transaction_code,
       rdfi_id: offset.routing_number,
       check_digit:
-        Utils.get_check_digit_from_rdfi_routing_number(offset.routing_number),
+        Utils.get_check_digit_from_routing_number(offset.routing_number),
       account_number: offset.account_number,
       amount: offset_amount,
       individual_id: "",

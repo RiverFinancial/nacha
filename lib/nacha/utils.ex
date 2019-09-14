@@ -11,8 +11,8 @@ defmodule Nacha.Utils do
   end
 
   # ref: https://en.wikipedia.org/wiki/Routing_transit_number#Check_digit
-  @spec get_check_digit_from_rdfi_routing_number(String.t()) :: integer()
-  def get_check_digit_from_rdfi_routing_number(routing_number)
+  @spec get_check_digit_from_routing_number(String.t()) :: integer()
+  def get_check_digit_from_routing_number(routing_number)
       when is_binary(routing_number) and byte_size(routing_number) == 8 do
     routing_number
     |> String.to_integer()
