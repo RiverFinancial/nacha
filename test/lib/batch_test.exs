@@ -183,7 +183,26 @@ defmodule Nacha.BatchTest do
 
       {:ok, batch} = Batch.build(@entries, @valid_params, offset)
 
-      assert Enum.count(batch.entries) == 5
+      assert Enum.count(batch.entries) == Enum.count(@entries) + 1
+      offset_entry = batch.entries |> List.last()
+
+      entries_credits_debits_diff =
+        batch.entries
+        |> Enum.take(Enum.count(@entries))
+        |> Enum.group_by(
+          &(&1.record.transaction_code in ["22", "32"]),
+          & &1.record.amount
+        )
+        |> (fn %{true: credits, false: debits} ->
+              :erlang.abs(Enum.sum(credits) - Enum.sum(debits))
+            end).()
+
+      assert offset_entry.record.amount == entries_credits_debits_diff
+      assert offset_entry.record.transaction_code == "22"
+
+      assert batch.control_record.total_credits ==
+               batch.control_record.total_debits
+
       assert Batch.valid?(batch)
     end
   end
