@@ -8,10 +8,10 @@ defmodule Nacha.Batch do
 
   import Kernel, except: [to_string: 1]
 
-  alias Nacha.{Entry, Utils}
   alias Nacha.Records.BatchHeader, as: Header
   alias Nacha.Records.BatchControl, as: Control
   alias Nacha.Records.EntryDetail
+  alias Nacha.Entry
 
   @credit_codes ["22", "32"]
   @debit_codes ["27", "37"]
@@ -157,11 +157,12 @@ defmodule Nacha.Batch do
           {"37", -amount, total_credits}
       end
 
+    {rdfi_id, check_digit} = String.split_at(offset.routing_number, -1)
+
     offset_entry_detail = %EntryDetail{
       transaction_code: transaction_code,
-      rdfi_id: offset.routing_number,
-      check_digit:
-        Utils.get_check_digit_from_routing_number(offset.routing_number),
+      rdfi_id: rdfi_id,
+      check_digit: String.to_integer(check_digit),
       account_number: offset.account_number,
       amount: offset_amount,
       individual_id: "",
@@ -189,22 +190,35 @@ defmodule Nacha.Batch do
     }
   end
 
-  defp validate(%{header_record: header, control_record: control} = batch) do
-    case {Header.validate(header), Control.validate(control)} do
-      {%{valid?: true} = header, %{valid?: true} = control} ->
+  defp validate(
+         %{header_record: header, control_record: control, entries: entries} =
+           batch
+       ) do
+    case {Header.validate(header), Control.validate(control),
+          Enum.all?(entries, &Entry.valid?/1)} do
+      {%{valid?: true} = header, %{valid?: true} = control, true} ->
         {:ok, %{batch | header_record: header, control_record: control}}
 
-      {header, control} ->
-        {:error, consolidate_errors(batch, header, control)}
+      {header, control, is_entries_valid} ->
+        {:error, consolidate_errors(batch, header, control, is_entries_valid)}
     end
   end
 
-  defp consolidate_errors(batch, header, control) do
+  defp consolidate_errors(batch, header, control, is_entries_valid) do
+    errors = Enum.uniq(header.errors ++ control.errors)
+
+    errors =
+      if is_entries_valid do
+        errors
+      else
+        ["contain invalid entry" | errors]
+      end
+
     %{
       batch
       | header_record: header,
         control_record: control,
-        errors: Enum.uniq(header.errors ++ control.errors)
+        errors: errors
     }
   end
 

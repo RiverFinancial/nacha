@@ -25,6 +25,12 @@ defmodule Nacha.Utils do
     |> Enum.map(fn {d, w} -> d * w end)
     |> Enum.sum()
     |> :erlang.rem(10)
-    |> (&(10 - &1)).()
+    |> (fn
+          0 ->
+            0
+
+          v ->
+            10 - v
+        end).()
   end
 end

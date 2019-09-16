@@ -4,13 +4,14 @@ defmodule Nacha.BatchTest do
   alias Nacha.{Batch, Entry, Records.Addendum, Records.EntryDetail}
   alias Nacha.Records.BatchHeader, as: Header
   alias Nacha.Records.BatchControl, as: Control
+  alias Nacha.Utils
 
   @credit_entries [
-    %Entry{
-      record: %EntryDetail{
+    Entry.build(
+      %EntryDetail{
         transaction_code: "22",
         rdfi_id: "99999999",
-        check_digit: 9,
+        check_digit: Utils.get_check_digit_from_routing_number("99999999"),
         account_number: "012345678",
         amount: 100,
         individual_id: "1234567890",
@@ -19,54 +20,48 @@ defmodule Nacha.BatchTest do
         trace_id: "12345678",
         trace_number: 1
       },
-      addenda: [
+      [
         %Addendum{
           payment_related_data: "This one has some additional data",
           entry_detail_sequence_number: 1
         }
       ]
-    },
-    %Entry{
-      record: %EntryDetail{
-        transaction_code: "32",
-        rdfi_id: "99999999",
-        check_digit: 9,
-        account_number: "012345678",
-        amount: 200,
-        individual_id: "1234567890",
-        individual_name: "Bob Loblaw",
-        trace_id: "12345678",
-        trace_number: 2
-      }
-    }
+    ),
+    Entry.build(%EntryDetail{
+      transaction_code: "32",
+      rdfi_id: "99999999",
+      check_digit: Utils.get_check_digit_from_routing_number("99999999"),
+      account_number: "012345678",
+      amount: 200,
+      individual_id: "1234567890",
+      individual_name: "Bob Loblaw",
+      trace_id: "12345678",
+      trace_number: 2
+    })
   ]
   @debit_entries [
-    %Entry{
-      record: %EntryDetail{
-        transaction_code: "27",
-        rdfi_id: "99999999",
-        check_digit: 9,
-        account_number: "012345678",
-        amount: 200,
-        individual_id: "1234567890",
-        individual_name: "Bob Loblaw",
-        trace_id: "12345678",
-        trace_number: 3
-      }
-    },
-    %Entry{
-      record: %EntryDetail{
-        transaction_code: "37",
-        rdfi_id: "99999999",
-        check_digit: 9,
-        account_number: "012345678",
-        amount: 300,
-        individual_id: "1234567890",
-        individual_name: "Bob Loblaw",
-        trace_id: "12345678",
-        trace_number: 4
-      }
-    }
+    Entry.build(%EntryDetail{
+      transaction_code: "27",
+      rdfi_id: "99999999",
+      check_digit: Utils.get_check_digit_from_routing_number("99999999"),
+      account_number: "012345678",
+      amount: 200,
+      individual_id: "1234567890",
+      individual_name: "Bob Loblaw",
+      trace_id: "12345678",
+      trace_number: 3
+    }),
+    Entry.build(%EntryDetail{
+      transaction_code: "37",
+      rdfi_id: "99999999",
+      check_digit: Utils.get_check_digit_from_routing_number("99999999"),
+      account_number: "012345678",
+      amount: 300,
+      individual_id: "1234567890",
+      individual_name: "Bob Loblaw",
+      trace_id: "12345678",
+      trace_number: 4
+    })
   ]
   @entries @credit_entries ++ @debit_entries
   @valid_params %{
@@ -80,11 +75,11 @@ defmodule Nacha.BatchTest do
   @sample_batch_string Enum.join(
                          [
                            "5200Sell Co                             1234567890PPD                170101   1123456780000001",
-                           "622999999999012345678        00000001001234567890     Bob Loblaw              1123456780000001",
+                           "622999999992012345678        00000001001234567890     Bob Loblaw              1123456780000001",
                            "705This one has some additional data                                               00010000001",
-                           "632999999999012345678        00000002001234567890     Bob Loblaw              0123456780000002",
-                           "627999999999012345678        00000002001234567890     Bob Loblaw              0123456780000003",
-                           "637999999999012345678        00000003001234567890     Bob Loblaw              0123456780000004",
+                           "632999999992012345678        00000002001234567890     Bob Loblaw              0123456780000002",
+                           "627999999992012345678        00000002001234567890     Bob Loblaw              0123456780000003",
+                           "637999999992012345678        00000003001234567890     Bob Loblaw              0123456780000004",
                            "820000000403999999960000000005000000000003001234567890                         123456780000001"
                          ],
                          "\n"
@@ -174,10 +169,26 @@ defmodule Nacha.BatchTest do
       assert {:standard_entry_class, "is required"} in batch.errors
     end
 
+    test "validates all enries detail check digits are correct" do
+      entries_with_incorrect_check_digit =
+        @entries
+        |> Enum.map(fn entry ->
+          Entry.build(
+            Map.update!(entry.record, :check_digit, &:erlang.rem(&1 + 1, 10)),
+            entry.addenda
+          )
+        end)
+
+      {:error, batch} =
+        Batch.build(entries_with_incorrect_check_digit, @valid_params)
+
+      refute Batch.valid?(batch)
+    end
+
     test "add offset entry when with_offset is passed" do
       offset = %Batch.Offset{
         account_number: "012345678",
-        routing_number: "12345678",
+        routing_number: "123456780",
         account_type: :checking
       }
 

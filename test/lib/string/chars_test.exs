@@ -2,6 +2,7 @@ defmodule String.CharsTest do
   use ExUnit.Case, async: true
 
   alias Nacha.{Batch, Entry, File}
+  alias Nacha.Utils
 
   alias Nacha.Records.{
     Addendum,
@@ -12,19 +13,18 @@ defmodule String.CharsTest do
     FileControl
   }
 
-  @sample_entry %Entry{
-    record: %EntryDetail{
-      transaction_code: "22",
-      rdfi_id: "11111111",
-      check_digit: 9,
-      account_number: "012345678",
-      amount: 100,
-      individual_id: "0987654321",
-      individual_name: "Bob Loblaw",
-      standard_entry_class: "PPD",
-      trace_number: "1234567890"
-    }
-  }
+  @sample_entry Entry.build(%EntryDetail{
+                  transaction_code: "22",
+                  rdfi_id: "11111111",
+                  check_digit:
+                    Utils.get_check_digit_from_routing_number("11111111"),
+                  account_number: "012345678",
+                  amount: 100,
+                  individual_id: "0987654321",
+                  individual_name: "Bob Loblaw",
+                  standard_entry_class: "PPD",
+                  trace_number: "1234567890"
+                })
   @valid_file_params %{
     batch_number: 1,
     company_id: "1234567890",

@@ -5,12 +5,13 @@ defmodule Nacha.FileTest do
   alias Nacha.{Batch, Entry, Records.Addendum, Records.EntryDetail}
   alias Nacha.{Batch, Entry, Records.EntryDetail}
   alias Nacha.File, as: NachaFile
+  alias Nacha.Utils
 
   @entries [
     Entry.build(%EntryDetail{
       transaction_code: "22",
       rdfi_id: "11111111",
-      check_digit: 9,
+      check_digit: Utils.get_check_digit_from_routing_number("11111111"),
       account_number: "012345678",
       amount: 100,
       individual_id: "0987654321",
@@ -23,7 +24,7 @@ defmodule Nacha.FileTest do
       %EntryDetail{
         transaction_code: "27",
         rdfi_id: "22222222",
-        check_digit: 9,
+        check_digit: Utils.get_check_digit_from_routing_number("22222222"),
         account_number: "123456789",
         amount: 200,
         individual_id: "9876543210",
@@ -44,7 +45,7 @@ defmodule Nacha.FileTest do
     Entry.build(%EntryDetail{
       transaction_code: "22",
       rdfi_id: "33333333",
-      check_digit: 9,
+      check_digit: Utils.get_check_digit_from_routing_number("33333333"),
       account_number: "234567890",
       amount: 100,
       individual_id: "8765432109",
@@ -56,7 +57,7 @@ defmodule Nacha.FileTest do
     Entry.build(%EntryDetail{
       transaction_code: "27",
       rdfi_id: "44444444",
-      check_digit: 9,
+      check_digit: Utils.get_check_digit_from_routing_number("44444444"),
       account_number: "345678901",
       amount: 200,
       individual_id: "7654321098",
@@ -68,7 +69,7 @@ defmodule Nacha.FileTest do
     Entry.build(%EntryDetail{
       transaction_code: "37",
       rdfi_id: "55555555",
-      check_digit: 9,
+      check_digit: Utils.get_check_digit_from_routing_number("55555555"),
       account_number: "456789012",
       amount: 444,
       individual_id: "6543210987",
@@ -80,7 +81,7 @@ defmodule Nacha.FileTest do
     Entry.build(%EntryDetail{
       transaction_code: "32",
       rdfi_id: "66666666",
-      check_digit: 9,
+      check_digit: Utils.get_check_digit_from_routing_number("66666666"),
       account_number: "567890123",
       amount: 200,
       individual_id: "5432109876",
@@ -92,7 +93,7 @@ defmodule Nacha.FileTest do
     Entry.build(%EntryDetail{
       transaction_code: "22",
       rdfi_id: "77777777",
-      check_digit: 9,
+      check_digit: Utils.get_check_digit_from_routing_number("77777777"),
       account_number: "678901234",
       amount: 666,
       individual_id: "4321098765",
@@ -104,7 +105,7 @@ defmodule Nacha.FileTest do
     Entry.build(%EntryDetail{
       transaction_code: "37",
       rdfi_id: "88888888",
-      check_digit: 9,
+      check_digit: Utils.get_check_digit_from_routing_number("88888888"),
       account_number: "789012345",
       amount: 300,
       individual_id: "3210987654",
@@ -127,7 +128,7 @@ defmodule Nacha.FileTest do
 
   @offset %Batch.Offset{
     account_number: "012345678",
-    routing_number: "12345678",
+    routing_number: "073000228",
     account_type: :checking
   }
 
@@ -135,17 +136,17 @@ defmodule Nacha.FileTest do
                         [
                           "101 12345678912345678901701011200A094101My Bank, Inc.          Sell Co                        ",
                           "5200Sell Co                             1234567890CCD                170101   1123456780000001",
-                          "627222222229123456789        00000002009876543210     Bob Loblaw              1123456780000002",
+                          "627222222226123456789        00000002009876543210     Bob Loblaw              1123456780000002",
                           "705More Info                                                                       00010000001",
-                          "622333333339234567890        00000001008765432109     Bob Loblaw              0123456780000003",
-                          "637555555559456789012        00000004446543210987     Bob Loblaw              0123456780000005",
+                          "622333333334234567890        00000001008765432109     Bob Loblaw              0123456780000003",
+                          "637555555550456789012        00000004446543210987     Bob Loblaw              0123456780000005",
                           "820000000301111111100000000006440000000001001234567890                         123456780000001",
                           "5200Sell Co                             1234567890PPD                170101   1123456780000002",
-                          "622111111119012345678        00000001000987654321     Bob Loblaw              0123456780000001",
-                          "627444444449345678901        00000002007654321098     Bob Loblaw              0123456780000004",
-                          "632666666669567890123        00000002005432109876     Bob Loblaw              0123456780000006",
-                          "622777777779678901234        00000006664321098765     Bob Loblaw              0123456780000007",
-                          "637888888889789012345        00000003003210987654     Bob Loblaw              0123456780000008",
+                          "622111111118012345678        00000001000987654321     Bob Loblaw              0123456780000001",
+                          "627444444442345678901        00000002007654321098     Bob Loblaw              0123456780000004",
+                          "632666666668567890123        00000002005432109876     Bob Loblaw              0123456780000006",
+                          "622777777776678901234        00000006664321098765     Bob Loblaw              0123456780000007",
+                          "637888888884789012345        00000003003210987654     Bob Loblaw              0123456780000008",
                           "820000000502888888860000000005000000000009661234567890                         123456780000002",
                           "9000002000002000000080399999996000000001144000000001066                                       ",
                           "9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999",
@@ -161,21 +162,21 @@ defmodule Nacha.FileTest do
                                     [
                                       "101 12345678912345678901701011200A094101My Bank, Inc.          Sell Co                        ",
                                       "5200Sell Co                             1234567890CCD                170101   1123456780000001",
-                                      "627222222229123456789        00000002009876543210     Bob Loblaw              1123456780000002",
+                                      "627222222226123456789        00000002009876543210     Bob Loblaw              1123456780000002",
                                       "705More Info                                                                       00010000001",
-                                      "622333333339234567890        00000001008765432109     Bob Loblaw              0123456780000003",
-                                      "637555555559456789012        00000004446543210987     Bob Loblaw              0123456780000005",
-                                      "622123456781012345678        0000000544               OFFSET                  0123456780000006",
-                                      "820000000301234567880000000006440000000006441234567890                         123456780000001",
+                                      "622333333334234567890        00000001008765432109     Bob Loblaw              0123456780000003",
+                                      "637555555550456789012        00000004446543210987     Bob Loblaw              0123456780000005",
+                                      "622073000228012345678        0000000544               OFFSET                  0123456780000006",
+                                      "820000000301184111320000000006440000000006441234567890                         123456780000001",
                                       "5200Sell Co                             1234567890PPD                170101   1123456780000002",
-                                      "622111111119012345678        00000001000987654321     Bob Loblaw              0123456780000001",
-                                      "627444444449345678901        00000002007654321098     Bob Loblaw              0123456780000004",
-                                      "632666666669567890123        00000002005432109876     Bob Loblaw              0123456780000006",
-                                      "622777777779678901234        00000006664321098765     Bob Loblaw              0123456780000007",
-                                      "637888888889789012345        00000003003210987654     Bob Loblaw              0123456780000008",
-                                      "627123456781012345678        0000000466               OFFSET                  0123456780000009",
-                                      "820000000503012345640000000009660000000009661234567890                         123456780000002",
-                                      "9000002000002000000080424691352000000001610000000001610                                       ",
+                                      "622111111118012345678        00000001000987654321     Bob Loblaw              0123456780000001",
+                                      "627444444442345678901        00000002007654321098     Bob Loblaw              0123456780000004",
+                                      "632666666668567890123        00000002005432109876     Bob Loblaw              0123456780000006",
+                                      "622777777776678901234        00000006664321098765     Bob Loblaw              0123456780000007",
+                                      "637888888884789012345        00000003003210987654     Bob Loblaw              0123456780000008",
+                                      "627073000228012345678        0000000466               OFFSET                  0123456780000009",
+                                      "820000000502961889080000000009660000000009661234567890                         123456780000002",
+                                      "9000002000002000000080414600040000000001610000000001610                                       ",
                                       "9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999",
                                       "9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999",
                                       "9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999",
@@ -227,9 +228,9 @@ defmodule Nacha.FileTest do
   end
 
   test "formatting a file as a string" do
-    {:ok, file} = NachaFile.build(@entries, @valid_params)
+    {:ok, nacha_file} = NachaFile.build(@entries, @valid_params)
 
-    string = NachaFile.to_string(file)
+    string = NachaFile.to_string(nacha_file)
 
     assert string == @sample_file_string
   end
@@ -239,6 +240,62 @@ defmodule Nacha.FileTest do
       NachaFile.build(@entries, @valid_params, with_offset: @offset)
 
     assert NachaFile.to_string(nacha_file) == @sample_file_string_with_offset
+  end
+
+  test "f" do
+    entries = [
+      Entry.build(%EntryDetail{
+        transaction_code: "22",
+        rdfi_id: "23138010",
+        check_digit: Utils.get_check_digit_from_routing_number("23138010"),
+        account_number: "12345678",
+        amount: 100_000_000,
+        individual_id: "",
+        individual_name: "Receiver Account Name",
+        standard_entry_class: "PPD",
+        trace_id: "121042882",
+        trace_number: 1
+      })
+    ]
+
+    offset = %Batch.Offset{
+      routing_number: "073000228",
+      account_number: "123456789",
+      account_type: :savings
+    }
+
+    valid_params = %{
+      effective_date: ~D[2017-01-01],
+      immediate_destination: "231380104",
+      immediate_origin: "121042882",
+      immediate_destination_name: "Federal Reserve Bank",
+      immediate_origin_name: "My Bank Name",
+      creation_date: ~D[2017-01-01],
+      creation_time: ~T[12:00:00]
+    }
+
+    sample_file_string_with_offset =
+      Enum.join(
+        [
+          "101 231380104121042882 1701011200A094101Federal Reserve Bank   My Bank Name                   ",
+          "5200My Bank Name                        121042882 PPD                170101   1231380100000001",
+          "62223138010412345678         0100000000               Receiver Account Name   0121042880000001",
+          "637073000228123456789        0100000000               OFFSET                  0231380100000002",
+          "82200000010030438032000100000000000100000000121042882                          231380100000001",
+          "9000001000001000000010030438032000100000000000100000000                                       ",
+          "9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999",
+          "9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999",
+          "9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999",
+          "9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999",
+          "9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999"
+        ],
+        "\n"
+      )
+
+    {:ok, nacha_file} =
+      NachaFile.build(entries, valid_params, with_offset: offset)
+
+    assert NachaFile.to_string(nacha_file) == sample_file_string_with_offset
   end
 
   test "doesn't add filler records for a full block" do
