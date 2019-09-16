@@ -195,6 +195,7 @@ defmodule Nacha.BatchTest do
       {:ok, batch} = Batch.build(@entries, @valid_params, offset)
 
       assert Enum.count(batch.entries) == Enum.count(@entries) + 1
+      assert batch.control_record.entry_count == Enum.count(@entries) + 1
       offset_entry = batch.entries |> List.last()
 
       entries_credits_debits_diff =

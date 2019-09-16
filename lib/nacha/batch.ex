@@ -184,6 +184,7 @@ defmodule Nacha.Batch do
       control_record: %{
         control_record
         | entry_hash: calculate_hash(new_entries),
+          entry_count: length(new_entries),
           total_debits: max_amount,
           total_credits: max_amount
       }
