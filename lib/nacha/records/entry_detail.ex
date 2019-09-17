@@ -24,7 +24,6 @@ defmodule Nacha.Records.EntryDetail do
     ]
 
   # override default validation to add check digit validation
-  @spec validate(t()) :: t()
   def validate(
         %{
           rdfi_id: rdfi_id,

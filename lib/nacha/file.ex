@@ -37,6 +37,7 @@ defmodule Nacha.File do
           optional(:effective_date) => Date.t(),
           optional(:descriptive_date) => Date.t(),
           optional(:file_id_modifier) => String.t(),
+          optional(:entry_description) => String.t(),
           immediate_destination: String.t(),
           immediate_origin: String.t(),
           immediate_destination_name: String.t(),
@@ -118,6 +119,7 @@ defmodule Nacha.File do
         company_name: params.immediate_origin_name,
         effective_date: params.effective_date,
         descriptive_date: Map.get(params, :descriptive_date),
+        entry_description: Map.get(params, :entry_description),
         # immediate_destination is of 9 digits(the first one is always blank so we exclude it. and the last digit is check digit)
         odfi_id: String.slice(params.immediate_destination, 0..7),
         standard_entry_class: sec
