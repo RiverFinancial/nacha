@@ -215,6 +215,71 @@ defmodule Nacha.BatchTest do
       assert batch.control_record.total_credits ==
                batch.control_record.total_debits
 
+      assert batch.control_record.service_class_code == 200
+      assert batch.header_record.service_class_code == 200
+
+      assert Batch.valid?(batch)
+    end
+
+    test "add offset entry when all entries are only credit and with_offset is passed " do
+      offset = %Batch.Offset{
+        account_number: "012345678",
+        routing_number: "123456780",
+        account_type: :checking
+      }
+
+      {:ok, batch} = Batch.build(@credit_entries, @valid_params, offset)
+
+      assert Enum.count(batch.entries) == Enum.count(@credit_entries) + 1
+      assert batch.control_record.entry_count == Enum.count(@credit_entries) + 1
+      offset_entry = batch.entries |> List.last()
+
+      total_credit_amount =
+        batch.entries
+        |> Enum.take(Enum.count(@credit_entries))
+        |> Enum.map(& &1.record.amount)
+        |> Enum.sum()
+
+      assert offset_entry.record.amount == total_credit_amount
+      assert offset_entry.record.transaction_code == "27"
+
+      assert batch.control_record.total_credits ==
+               batch.control_record.total_debits
+
+      assert batch.control_record.service_class_code == 200
+      assert batch.header_record.service_class_code == 200
+
+      assert Batch.valid?(batch)
+    end
+
+    test "add offset entry when all entries are only debit and with_offset is passed " do
+      offset = %Batch.Offset{
+        account_number: "012345678",
+        routing_number: "123456780",
+        account_type: :checking
+      }
+
+      {:ok, batch} = Batch.build(@debit_entries, @valid_params, offset)
+
+      assert Enum.count(batch.entries) == Enum.count(@debit_entries) + 1
+      assert batch.control_record.entry_count == Enum.count(@debit_entries) + 1
+      offset_entry = batch.entries |> List.last()
+
+      total_debit_amount =
+        batch.entries
+        |> Enum.take(Enum.count(@debit_entries))
+        |> Enum.map(& &1.record.amount)
+        |> Enum.sum()
+
+      assert offset_entry.record.amount == total_debit_amount
+      assert offset_entry.record.transaction_code == "22"
+
+      assert batch.control_record.total_credits ==
+               batch.control_record.total_debits
+
+      assert batch.control_record.service_class_code == 200
+      assert batch.header_record.service_class_code == 200
+
       assert Batch.valid?(batch)
     end
   end
