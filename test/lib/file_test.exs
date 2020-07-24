@@ -123,7 +123,8 @@ defmodule Nacha.FileTest do
     immediate_destination_name: "My Bank, Inc.",
     immediate_origin_name: "Sell Co",
     creation_date: ~D[2017-01-01],
-    creation_time: ~T[12:00:00]
+    creation_time: ~T[12:00:00],
+    company_id: "1234567890"
   }
 
   @offset %Batch.Offset{
@@ -240,7 +241,7 @@ defmodule Nacha.FileTest do
     assert NachaFile.to_string(nacha_file) == @sample_file_string_with_offset
   end
 
-  test "f" do
+  test "build nacha file correctly" do
     entries = [
       Entry.build(%EntryDetail{
         transaction_code: "22",
@@ -268,6 +269,7 @@ defmodule Nacha.FileTest do
       immediate_origin: "121042882",
       immediate_destination_name: "Federal Reserve Bank",
       immediate_origin_name: "My Bank Name",
+      company_id: "222211113",
       creation_date: ~D[2017-01-01],
       creation_time: ~T[12:00:00]
     }
@@ -276,10 +278,10 @@ defmodule Nacha.FileTest do
       Enum.join(
         [
           "101 231380104121042882 1701011200A094101Federal Reserve Bank   My Bank Name                   ",
-          "5200My Bank Name                        121042882 PPD                170101   1231380100000001",
+          "5200My Bank Name                        222211113 PPD                170101   1231380100000001",
           "62223138010412345678         0100000000               Receiver Account Name   0121042880000001",
           "637073000228123456789        0100000000               OFFSET                  0231380100000002",
-          "82000000020030438032000100000000000100000000121042882                          231380100000001",
+          "82000000020030438032000100000000000100000000222211113                          231380100000001",
           "9000001000001000000020030438032000100000000000100000000                                       ",
           "9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999",
           "9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999",

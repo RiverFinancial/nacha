@@ -40,7 +40,8 @@ defmodule String.CharsTest do
     immediate_destination_name: "My Bank, Inc.",
     immediate_origin_name: "Sell Co",
     creation_date: ~D[2017-01-01],
-    creation_time: ~T[12:00:00]
+    creation_time: ~T[12:00:00],
+    company_id: "1234567890"
   }
 
   test "String.Chars implementation for NACHA records" do
