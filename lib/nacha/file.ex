@@ -41,7 +41,8 @@ defmodule Nacha.File do
           immediate_destination: String.t(),
           immediate_origin: String.t(),
           immediate_destination_name: String.t(),
-          immediate_origin_name: String.t()
+          immediate_origin_name: String.t(),
+          company_id: String.t()
         }
 
   @type build_option :: {:with_offset, Batch.Offset.t()}
@@ -115,7 +116,7 @@ defmodule Nacha.File do
     |> Batch.build(
       %{
         batch_number: batch_num,
-        company_id: params.immediate_origin,
+        company_id: params.company_id,
         company_name: params.immediate_origin_name,
         effective_date: params.effective_date,
         descriptive_date: Map.get(params, :descriptive_date),
