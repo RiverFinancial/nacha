@@ -23,6 +23,11 @@ defmodule Nacha.Entry do
     }
   end
 
+  @spec valid?(t()) :: boolean()
+  def valid?(entry) do
+    Enum.all?([entry.record | entry.addenda], & &1.valid?)
+  end
+
   @spec to_string(__MODULE__.t()) :: String.t()
   def to_string(%__MODULE__{} = entry),
     do: entry |> to_iolist |> Kernel.to_string()

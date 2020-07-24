@@ -5,7 +5,7 @@ defmodule Nacha.Records.EntryDetailTest do
 
   @sample_record %EntryDetail{
     transaction_code: "27",
-    rdfi_id: 12_345_678,
+    rdfi_id: "12345678",
     check_digit: 9,
     account_number: "012345678",
     amount: "9999",

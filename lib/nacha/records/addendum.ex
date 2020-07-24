@@ -26,7 +26,7 @@ defmodule Nacha.Records.Addendum do
     @type t :: %__MODULE__{
             reason_code: String.t(),
             original_entry_trace_number: String.t(),
-            original_rdfi_id: integer(),
+            original_rdfi_id: String.t(),
             corrected_data: String.t(),
             addendum_sequence_number: integer(),
             entry_detail_sequence_number: integer()
@@ -47,7 +47,7 @@ defmodule Nacha.Records.Addendum do
             reason_code: String.t(),
             original_entry_trace_number: String.t(),
             date_of_death: Date.t() | nil,
-            original_rdfi_id: integer(),
+            original_rdfi_id: String.t(),
             addenda_information: String.t(),
             addendum_sequence_number: integer(),
             entry_detail_sequence_number: integer()

@@ -36,6 +36,8 @@ defmodule Nacha.Record do
         do: unquote(__MODULE__).to_iolist(records, @fields)
 
       def to_iolist([]), do: []
+
+      defoverridable validate: 1
     end
   end
 

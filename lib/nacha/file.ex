@@ -37,21 +37,25 @@ defmodule Nacha.File do
           optional(:effective_date) => Date.t(),
           optional(:descriptive_date) => Date.t(),
           optional(:file_id_modifier) => String.t(),
+          optional(:entry_description) => String.t(),
           immediate_destination: String.t(),
           immediate_origin: String.t(),
           immediate_destination_name: String.t(),
           immediate_origin_name: String.t()
         }
 
+  @type build_option :: {:with_offset, Batch.Offset.t()}
   @doc """
   Build a valid file with necessary generated values.
   """
-  @spec build(list(Entry.t()), build_file_params) ::
+  @spec build(list(Entry.t()), build_file_params, [build_option]) ::
           {:ok, t()} | {:error, t()}
-  def build(entries, params) do
+  def build(entries, params, opts \\ []) do
+    offset = Keyword.get(opts, :with_offset, nil)
+
     params
     |> build_params
-    |> do_build(entries)
+    |> do_build(entries, offset)
     |> validate
   end
 
@@ -89,35 +93,39 @@ defmodule Nacha.File do
     |> Map.put_new_lazy(:effective_date, &Date.utc_today/0)
   end
 
-  defp do_build(params, entries) do
+  defp do_build(params, entries, offset) do
     %__MODULE__{}
     |> build_header(params)
-    |> build_batches(params, entries)
+    |> build_batches(params, entries, offset)
     |> build_control
   end
 
   defp build_header(file, params),
     do: Map.put(file, :header_record, struct(Header, params))
 
-  defp build_batches(file, params, entries) do
+  defp build_batches(file, params, entries, offset) do
     entries
     |> Enum.group_by(& &1.record.standard_entry_class)
     |> Enum.with_index(1)
-    |> List.foldr(file, &build_batch(&1, &2, params))
+    |> List.foldr(file, &build_batch(&1, &2, params, offset))
   end
 
-  defp build_batch({{sec, entries}, batch_num}, file, params) do
+  defp build_batch({{sec, entries}, batch_num}, file, params, offset) do
     entries
-    |> Batch.build(%{
-      batch_number: batch_num,
-      company_id: params.immediate_origin,
-      company_name: params.immediate_origin_name,
-      effective_date: params.effective_date,
-      descriptive_date: Map.get(params, :descriptive_date),
-      # immediate_destination is of 9 digits(the first one is always blank so we exclude it. and the last digit is check digit)
-      odfi_id: String.slice(params.immediate_destination, 0..7),
-      standard_entry_class: sec
-    })
+    |> Batch.build(
+      %{
+        batch_number: batch_num,
+        company_id: params.immediate_origin,
+        company_name: params.immediate_origin_name,
+        effective_date: params.effective_date,
+        descriptive_date: Map.get(params, :descriptive_date),
+        entry_description: Map.get(params, :entry_description),
+        # immediate_destination is of 9 digits(the first one is always blank so we exclude it. and the last digit is check digit)
+        odfi_id: String.slice(params.immediate_destination, 0..7),
+        standard_entry_class: sec
+      },
+      offset
+    )
     |> case do
       {:ok, batch} -> Map.update!(file, :batches, &[batch | &1])
       {:error, failed} -> Map.update!(file, :failed, &[failed | &1])
@@ -187,7 +195,7 @@ defmodule Nacha.File do
     hash =
       batches
       |> Stream.flat_map(fn batch ->
-        Enum.map(batch.entries, & &1.record.rdfi_id)
+        Enum.map(batch.entries, &String.to_integer(&1.record.rdfi_id))
       end)
       |> Enum.sum()
       |> Integer.digits()

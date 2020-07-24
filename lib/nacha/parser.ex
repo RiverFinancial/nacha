@@ -230,7 +230,6 @@ defmodule Nacha.Parser do
          acc
        ) do
     transaction_code = String.trim(transaction_code)
-    {rdfi_id, ""} = Integer.parse(rdfi_id)
     {check_digit, ""} = Integer.parse(check_digit)
     account_number = String.trim(account_number)
     {amount, ""} = Integer.parse(amount)
