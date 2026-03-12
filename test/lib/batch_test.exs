@@ -282,6 +282,50 @@ defmodule Nacha.BatchTest do
 
       assert Batch.valid?(batch)
     end
+
+    test "offset entry gets discretionary_data 'S' when discretionary_data is passed" do
+      offset = %Batch.Offset{
+        account_number: "012345678",
+        routing_number: "123456780",
+        account_type: :checking,
+        discretionary_data: "S"
+      }
+
+      {:ok, batch} = Batch.build(@debit_entries, @valid_params, offset)
+
+      offset_entry = batch.entries |> List.last()
+      assert offset_entry.record.individual_name == "OFFSET"
+      assert offset_entry.record.discretionary_data == "S"
+    end
+
+    test "offset entry gets discretionary_data 'R' when discretionary_data is passed" do
+      offset = %Batch.Offset{
+        account_number: "012345678",
+        routing_number: "123456780",
+        account_type: :checking,
+        discretionary_data: "R"
+      }
+
+      {:ok, batch} = Batch.build(@debit_entries, @valid_params, offset)
+
+      offset_entry = batch.entries |> List.last()
+      assert offset_entry.record.individual_name == "OFFSET"
+      assert offset_entry.record.discretionary_data == "R"
+    end
+
+    test "offset entry has nil discretionary_data when discretionary_data is not passed" do
+      offset = %Batch.Offset{
+        account_number: "012345678",
+        routing_number: "123456780",
+        account_type: :checking
+      }
+
+      {:ok, batch} = Batch.build(@debit_entries, @valid_params, offset)
+
+      offset_entry = batch.entries |> List.last()
+      assert offset_entry.record.individual_name == "OFFSET"
+      assert offset_entry.record.discretionary_data == nil
+    end
   end
 
   test "formatting a batch as a string" do

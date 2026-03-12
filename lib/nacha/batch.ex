@@ -33,10 +33,15 @@ defmodule Nacha.Batch do
     @type t :: %__MODULE__{
             routing_number: String.t(),
             account_number: String.t(),
-            account_type: :checking | :savings
+            account_type: :checking | :savings,
+            discretionary_data: String.t() | nil
           }
-    @enforce_keys [:routing_number, :account_number, :account_type]
-    defstruct @enforce_keys
+    @enforce_keys [
+      :routing_number,
+      :account_number,
+      :account_type
+    ]
+    defstruct @enforce_keys ++ [:discretionary_data]
   end
 
   @doc """
@@ -168,6 +173,7 @@ defmodule Nacha.Batch do
       individual_id: "",
       individual_name: "OFFSET",
       standard_entry_class: header_record.standard_entry_class,
+      discretionary_data: offset.discretionary_data,
       # ODFI routing number
       trace_id: header_record.odfi_id,
       trace_number: get_offset_trace_number(entries)

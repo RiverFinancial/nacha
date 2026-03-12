@@ -361,6 +361,11 @@ defmodule Nacha.FileTest do
                NachaFile.parse("./test/fixtures/achfiles/ppd-credit.ach")
     end
 
+    test "web-debit" do
+      assert {:ok, _file} =
+               NachaFile.parse("./test/fixtures/achfiles/web-debit.ach")
+    end
+
     # containing return and notification of change addenda
     test "return-noc" do
       assert {:ok, file} =
